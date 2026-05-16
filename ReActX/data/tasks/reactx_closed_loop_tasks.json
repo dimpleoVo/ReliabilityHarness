@@ -1,0 +1,34 @@
+[
+  {
+    "id": "task_001",
+    "task": "print hello world",
+    "gt": "hello world",
+    "meta": {
+      "doc_type": "general"
+    }
+  },
+  {
+    "id": "task_002",
+    "task": "write python code to compute 1 + 2 and print result",
+    "gt": "3",
+    "meta": {
+      "doc_type": "math"
+    }
+  },
+  {
+    "id": "task_003",
+    "task": "create a list [1,2,3] and print its length",
+    "gt": "3",
+    "meta": {
+      "doc_type": "list"
+    }
+  },
+  {
+    "id": "task_004",
+    "task": "reverse the string 'abc' and print it",
+    "gt": "cba",
+    "meta": {
+      "doc_type": "string"
+    }
+  }
+]

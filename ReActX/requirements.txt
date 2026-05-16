@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pydantic
+openai
+langchain-community
+langchain-text-splitters
+pypdf
+chromadb
+httpx
+python-multipart
+docker
+load_dotenv
+requests
+httpx
+python-dotenv

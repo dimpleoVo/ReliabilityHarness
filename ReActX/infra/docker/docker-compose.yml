@@ -1,0 +1,37 @@
+
+
+services:
+  reactx-backend:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile
+    container_name: reactx-backend
+    env_file:
+      - ../../.env
+    environment:
+      - PYTHONPATH=/app/ReActX
+      - SANDBOX_BASE_URL=http://sandbox:9000
+      - PYTHONIOENCODING=utf-8
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+    working_dir: /app/ReActX
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../:/app/ReActX
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../../chroma_db:/app/ReActX/chroma_db_data
+    command: uvicorn app.main_api:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - sandbox
+
+  sandbox:
+    build:
+      context: ../../
+      dockerfile: sandbox/Dockerfile
+    container_name: reactx-sandbox
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped

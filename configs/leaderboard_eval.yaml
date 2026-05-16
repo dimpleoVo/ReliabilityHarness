@@ -1,0 +1,35 @@
+version: "2.0"
+mode: leaderboard
+
+project:
+  name: EvalForge
+  run_name: demo_leaderboard
+  output_dir: outputs
+
+task:
+  name: recognition
+  benchmark: omnidocbench
+
+dataset:
+  name: omnidocbench
+  gt_dir: demo_data/gt
+
+leaderboard:
+  runs:
+    - name: run_001
+      base_dir: demo_data/runs/run_001
+    - name: run_002
+      base_dir: demo_data/runs/run_002
+
+metrics:
+  - name: edit_distance
+  - name: llm_judge
+
+judge:
+  type: mock
+  mock: true
+
+analysis:
+  slice_keys:
+    - doc_type
+  top_k_badcases: 5

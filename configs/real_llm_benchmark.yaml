@@ -1,0 +1,29 @@
+mode: benchmark
+benchmark: omnidocbench
+run_name: real_deepseek_demo
+
+output_dir: outputs
+prediction_output_root: outputs/real_deepseek_demo
+
+dataset:
+  name: omnidocbench
+  gt_dir: /workspace/output/gt
+
+analysis:
+  slice_keys: ["doc_type"]
+
+models:
+  - name: deepseek_real
+    runner_type: openai_compat_runner
+    base_url: "https://api.deepseek.com"
+    model: "deepseek-chat"
+    api_key_env: "DEEPSEEK_API_KEY"
+
+    # runner 读输入的目录（不写也行，默认用 gt_dir）
+    input_dir: /workspace/output/gt
+
+    # 今天只跑小样本，确保快速出报告
+    max_files: 20
+    max_chars: 6000
+    timeout: 90
+    sleep_s: 0.5

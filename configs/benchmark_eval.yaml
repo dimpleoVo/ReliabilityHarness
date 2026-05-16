@@ -1,0 +1,42 @@
+version: "2.0"
+mode: benchmark
+
+project:
+  name: EvalForge
+  run_name: demo_benchmark
+  output_dir: outputs
+  prediction_output_root: eval_data/runs
+
+task:
+  name: recognition
+  benchmark: omnidocbench
+
+dataset:
+  name: omnidocbench
+  gt_dir: demo_data/gt
+
+scheduler:
+  type: parallel
+  max_workers: 2
+
+models:
+  - name: run_001
+    runner_type: copy_runner
+    source_pred_dir: demo_data/source_runs/run_001/pred
+
+  - name: run_002
+    runner_type: copy_runner
+    source_pred_dir: demo_data/source_runs/run_002/pred
+
+metrics:
+  - name: edit_distance
+  - name: llm_judge
+
+judge:
+  type: mock
+  mock: true
+
+analysis:
+  slice_keys:
+    - doc_type
+  top_k_badcases: 5

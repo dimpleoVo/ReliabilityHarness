@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+conda-meta/
+
+# Environment variables / secrets
+.env
+.env.*
+*.key
+*.pem
+kaggle.json
+
+# API keys / local configs
+config.local.*
+configs/*local*
+secrets/
+credentials/
+
+# Chroma / vector db
+chroma_db/
+chroma_db_data/
+.chroma/
+*.sqlite3
+*.sqlite
+*.db
+
+# Data / generated memory
+data/failure_memory.jsonl
+data/generated/
+data/tmp/
+data/cache/
+outputs/
+runs/
+reports/generated/
+
+# Docker / runtime
+*.log
+logs/
+tmp/
+temp/
+.cache/
+
+# IDE / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.streamlit/secrets.toml
+
+# Large model / downloaded assets
+*.onnx
+*.bin
+*.pt
+*.pth
+*.safetensors
+*.tar.gz
+*.zip
+
+# Old / backup docs
+README_old_backup.md
+README_backup.md
+*.docx
+~$*
