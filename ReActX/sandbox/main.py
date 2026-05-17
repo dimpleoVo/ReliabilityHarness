@@ -18,6 +18,7 @@ class ExecuteResponse(BaseModel):
     stderr: str
     return_code: int
     timeout: bool
+    runtime_error: bool
     runtime: float
 
 
