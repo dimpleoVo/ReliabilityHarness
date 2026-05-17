@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "se_003",
+    "category": "semantic_error",
+    "task": "Write Python code that prints the number of uppercase letters in the string 'PyThOn'.",
+    "expected_output": "3",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may count all letters or count lowercase letters instead of uppercase, giving a wrong count.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "se_003",
+    "category": "semantic_error",
+    "task": "Write Python code that prints the number of uppercase letters in the string 'PyThOn'.",
+    "expected_output": "3",
+    "success": true,
+    "num_attempts": 1,
+    "final_output": "3",
+    "final_score": 1.0,
+    "failure_mode": "semantic_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": false,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

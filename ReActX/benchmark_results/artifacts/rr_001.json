@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "rr_001",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints the binary representation of 42 without the '0b' prefix.",
+    "expected_output": "101010",
+    "failure_mode": "semantic_error",
+    "difficulty": "medium",
+    "why_relevant": "LLMs often return bin(42) verbatim as '0b101010'; reflection on the prefix error guides the fix.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "rr_001",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints the binary representation of 42 without the '0b' prefix.",
+    "expected_output": "101010",
+    "success": true,
+    "num_attempts": 2,
+    "final_output": "101010",
+    "final_score": 1.0,
+    "failure_mode": "semantic_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": true,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

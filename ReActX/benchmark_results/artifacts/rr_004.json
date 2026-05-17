@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "rr_004",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints the count of the letter 'l' in the string 'hello world'.",
+    "expected_output": "3",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may count case-insensitively or stop at the first word; retry reflection corrects the full-string count.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "rr_004",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints the count of the letter 'l' in the string 'hello world'.",
+    "expected_output": "3",
+    "success": true,
+    "num_attempts": 2,
+    "final_output": "3",
+    "final_score": 1.0,
+    "failure_mode": "semantic_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": true,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

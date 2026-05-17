@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "ma_002",
+    "category": "memory_assisted",
+    "task": "Write Python code that prints the result of 2 raised to the power of 10.",
+    "expected_output": "1024",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may confuse base and exponent order; memory of a prior power-of-2 fix accelerates correction.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "ma_002",
+    "category": "memory_assisted",
+    "task": "Write Python code that prints the result of 2 raised to the power of 10.",
+    "expected_output": "1024",
+    "success": true,
+    "num_attempts": 1,
+    "final_output": "1024",
+    "final_score": 1.0,
+    "failure_mode": "semantic_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": false,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

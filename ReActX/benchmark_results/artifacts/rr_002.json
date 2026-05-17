@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "rr_002",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints the string 'hello' with each character separated by a hyphen.",
+    "expected_output": "h-e-l-l-o",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs often use space or comma as separator; reflection on wrong output guides the correct hyphen fix.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "rr_002",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints the string 'hello' with each character separated by a hyphen.",
+    "expected_output": "h-e-l-l-o",
+    "success": true,
+    "num_attempts": 2,
+    "final_output": "h-e-l-l-o",
+    "final_score": 1.0,
+    "failure_mode": "semantic_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": true,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

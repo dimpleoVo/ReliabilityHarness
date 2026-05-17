@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "to_002",
+    "category": "timeout",
+    "task": "Write Python code that prints the sum of all integers from 1 to 100.",
+    "expected_output": "5050",
+    "failure_mode": "timeout",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may write a while loop that never increments its counter, running indefinitely.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "to_002",
+    "category": "timeout",
+    "task": "Write Python code that prints the sum of all integers from 1 to 100.",
+    "expected_output": "5050",
+    "success": false,
+    "num_attempts": 3,
+    "final_output": "",
+    "final_score": 0.0,
+    "failure_mode": "timeout",
+    "runtime_error": false,
+    "timeout": true,
+    "recovered": false,
+    "artifact_path": "",
+    "error_summary": "mock_timeout_failure"
+  },
+  "mock": true
+}

@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "re_001",
+    "category": "runtime_error",
+    "task": "Write Python code that prints the last element of the list [10, 20, 30].",
+    "expected_output": "30",
+    "failure_mode": "runtime_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs often use index 3 (off-by-one) on a length-3 list, causing IndexError.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "re_001",
+    "category": "runtime_error",
+    "task": "Write Python code that prints the last element of the list [10, 20, 30].",
+    "expected_output": "30",
+    "success": true,
+    "num_attempts": 1,
+    "final_output": "30",
+    "final_score": 1.0,
+    "failure_mode": "runtime_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": false,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

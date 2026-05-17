@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "ma_003",
+    "category": "memory_assisted",
+    "task": "Write Python code that prints the first 5 elements of the list [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as a Python list literal.",
+    "expected_output": "[1, 2, 3, 4, 5]",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may use wrong slice bounds or print format; memory of prior list-slicing failures guides correction.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "ma_003",
+    "category": "memory_assisted",
+    "task": "Write Python code that prints the first 5 elements of the list [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as a Python list literal.",
+    "expected_output": "[1, 2, 3, 4, 5]",
+    "success": true,
+    "num_attempts": 1,
+    "final_output": "[1, 2, 3, 4, 5]",
+    "final_score": 1.0,
+    "failure_mode": "semantic_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": false,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

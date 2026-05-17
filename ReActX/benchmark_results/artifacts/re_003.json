@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "re_003",
+    "category": "runtime_error",
+    "task": "Write Python code that prints the integer floor of dividing 17 by 3.",
+    "expected_output": "5",
+    "failure_mode": "runtime_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may use regular division then miscast to int, or accidentally divide by zero in a template.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "re_003",
+    "category": "runtime_error",
+    "task": "Write Python code that prints the integer floor of dividing 17 by 3.",
+    "expected_output": "5",
+    "success": true,
+    "num_attempts": 1,
+    "final_output": "5",
+    "final_score": 1.0,
+    "failure_mode": "runtime_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": false,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

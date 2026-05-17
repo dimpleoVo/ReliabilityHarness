@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "rr_003",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints only the FizzBuzz label for the number 15. Output exactly one word.",
+    "expected_output": "FizzBuzz",
+    "failure_mode": "semantic_error",
+    "difficulty": "medium",
+    "why_relevant": "LLMs often print all FizzBuzz values from 1 to 15; reflection on excess output guides the single-value fix.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "rr_003",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints only the FizzBuzz label for the number 15. Output exactly one word.",
+    "expected_output": "FizzBuzz",
+    "success": true,
+    "num_attempts": 2,
+    "final_output": "FizzBuzz",
+    "final_score": 1.0,
+    "failure_mode": "semantic_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": true,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

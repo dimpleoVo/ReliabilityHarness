@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "se_001",
+    "category": "semantic_error",
+    "task": "Write Python code that prints the number of characters in the string 'reliability'.",
+    "expected_output": "11",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may count by splitting on spaces or miscounting vowels, producing a wrong integer.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "se_001",
+    "category": "semantic_error",
+    "task": "Write Python code that prints the number of characters in the string 'reliability'.",
+    "expected_output": "11",
+    "success": true,
+    "num_attempts": 1,
+    "final_output": "11",
+    "final_score": 1.0,
+    "failure_mode": "semantic_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": false,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

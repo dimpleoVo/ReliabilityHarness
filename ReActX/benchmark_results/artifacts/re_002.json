@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "re_002",
+    "category": "runtime_error",
+    "task": "Write Python code that prints the value associated with key 'score' in the dictionary {'score': 99}.",
+    "expected_output": "99",
+    "failure_mode": "runtime_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs sometimes access a mistyped key string, causing KeyError on first attempt.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "re_002",
+    "category": "runtime_error",
+    "task": "Write Python code that prints the value associated with key 'score' in the dictionary {'score': 99}.",
+    "expected_output": "99",
+    "success": true,
+    "num_attempts": 1,
+    "final_output": "99",
+    "final_score": 1.0,
+    "failure_mode": "runtime_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": false,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

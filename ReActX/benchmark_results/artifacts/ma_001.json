@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "ma_001",
+    "category": "memory_assisted",
+    "task": "Write Python code that prints 'Hello, World!'",
+    "expected_output": "Hello, World!",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "Classic greeting task; memory of prior format errors guides capitalization and punctuation fixes.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "ma_001",
+    "category": "memory_assisted",
+    "task": "Write Python code that prints 'Hello, World!'",
+    "expected_output": "Hello, World!",
+    "success": true,
+    "num_attempts": 1,
+    "final_output": "Hello, World!",
+    "final_score": 1.0,
+    "failure_mode": "semantic_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": false,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}

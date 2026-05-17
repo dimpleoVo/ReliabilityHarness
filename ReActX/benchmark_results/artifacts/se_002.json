@@ -1,0 +1,32 @@
+{
+  "task": {
+    "id": "se_002",
+    "category": "semantic_error",
+    "task": "Write Python code that prints 'odd' if 7 is odd, or 'even' if 7 is even.",
+    "expected_output": "odd",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs sometimes invert the modulo condition or swap the labels, outputting 'even' for an odd number.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  "result": {
+    "id": "se_002",
+    "category": "semantic_error",
+    "task": "Write Python code that prints 'odd' if 7 is odd, or 'even' if 7 is even.",
+    "expected_output": "odd",
+    "success": true,
+    "num_attempts": 1,
+    "final_output": "odd",
+    "final_score": 1.0,
+    "failure_mode": "semantic_error",
+    "runtime_error": false,
+    "timeout": false,
+    "recovered": false,
+    "artifact_path": "",
+    "error_summary": ""
+  },
+  "mock": true
+}
