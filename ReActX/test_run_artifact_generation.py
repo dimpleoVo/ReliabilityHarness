@@ -11,6 +11,7 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+import app.artifacts.run_artifact as run_artifact_module
 from app.artifacts.run_artifact import save_run_artifact
 
 # ---------------------------------------------------------------------------
@@ -81,6 +82,7 @@ MOCK_RESULT = {
 REQUIRED_TOP_FIELDS = {
     "task", "timestamp", "success", "num_attempts",
     "final_score", "failure_summary", "memory_used", "attempts",
+    "trajectory_analysis",
 }
 
 REQUIRED_ATTEMPT_FIELDS = {
@@ -135,6 +137,20 @@ def test_artifact_attempt_fields():
         assert not missing, f"Missing attempt fields: {sorted(missing)}"
 
 
+def test_artifact_contains_trajectory_analysis():
+    with tempfile.TemporaryDirectory() as d:
+        path = save_run_artifact(MOCK_RESULT, task="print hello world", runs_dir=d)
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+
+        analysis = data.get("trajectory_analysis")
+        assert isinstance(analysis, dict), \
+            f"trajectory_analysis must be a dict, got {type(analysis)}"
+        assert "recovery_type" in analysis, "trajectory_analysis.recovery_type missing"
+        assert "trajectory_quality" in analysis, "trajectory_analysis.trajectory_quality missing"
+        assert analysis["num_attempts"] == 1, analysis
+
+
 def test_generated_code_and_stderr_preserved():
     with tempfile.TemporaryDirectory() as d:
         path = save_run_artifact(MOCK_RESULT, task="print hello world", runs_dir=d)
@@ -176,6 +192,24 @@ def test_artifact_write_failure_does_not_crash():
     # Again: must not raise; return value is not the contract being tested here.
 
 
+def test_trajectory_analysis_failure_does_not_crash():
+    original = run_artifact_module.analyze_trajectory
+
+    def broken_analyzer(_attempts):
+        raise RuntimeError("forced analyzer failure")
+
+    run_artifact_module.analyze_trajectory = broken_analyzer
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            path = save_run_artifact(MOCK_RESULT, task="print hello world", runs_dir=d)
+            assert path is not None, "artifact save should still succeed"
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+            assert data["trajectory_analysis"] is None, data["trajectory_analysis"]
+    finally:
+        run_artifact_module.analyze_trajectory = original
+
+
 # ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
@@ -186,9 +220,11 @@ if __name__ == "__main__":
         test_artifact_json_loadable,
         test_artifact_top_level_fields,
         test_artifact_attempt_fields,
+        test_artifact_contains_trajectory_analysis,
         test_generated_code_and_stderr_preserved,
         test_memory_used_is_bool,
         test_artifact_write_failure_does_not_crash,
+        test_trajectory_analysis_failure_does_not_crash,
     ]
 
     passed = failed = 0

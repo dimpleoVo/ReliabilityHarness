@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from app.reasoning.trajectory_analyzer import analyze_trajectory
+
 
 BASE_DIR = Path(__file__).resolve().parent
 TASKS_PATH = BASE_DIR / "data" / "reliability_tasks.json"
@@ -25,6 +27,7 @@ REQUIRED_RESULT_FIELDS = (
     "recovered",
     "artifact_path",
     "error_summary",
+    "trajectory_analysis",
 )
 
 DEFAULT_CATEGORIES = (
@@ -80,6 +83,110 @@ def _write_task_artifact(output_dir: Path, task_id: str, payload: dict[str, Any]
     return str(path)
 
 
+def _safe_analyze_trajectory(attempts: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not attempts:
+        return None
+    try:
+        return analyze_trajectory(attempts)
+    except Exception as e:
+        print(f"[ReliabilityBenchmark] WARNING: trajectory analysis failed: {e}")
+        return None
+
+
+def _mock_attempts_for_result(
+    category: str,
+    expected: Any,
+    success: bool,
+    num_attempts: int,
+) -> list[dict[str, Any]]:
+    if category == "recoverable_retry":
+        return [
+            {
+                "attempt_index": 1,
+                "generated_code": "print('wrong')",
+                "stdout": "wrong",
+                "stderr": "",
+                "runtime_error": False,
+                "timeout": False,
+                "score": 0.0,
+                "reflection": "Replace wrong output with the expected value.",
+                "retry_reason": "semantic_error",
+            },
+            {
+                "attempt_index": 2,
+                "generated_code": f"print({expected!r})",
+                "stdout": expected,
+                "stderr": "",
+                "runtime_error": False,
+                "timeout": False,
+                "score": 1.0,
+                "reflection": "",
+                "retry_reason": "",
+            },
+        ]
+
+    if success:
+        return [
+            {
+                "attempt_index": 1,
+                "generated_code": f"print({expected!r})",
+                "stdout": expected,
+                "stderr": "",
+                "runtime_error": False,
+                "timeout": False,
+                "score": 1.0,
+                "reflection": "",
+                "retry_reason": "",
+            }
+        ]
+
+    attempts = []
+    for idx in range(1, num_attempts + 1):
+        if category == "timeout":
+            attempts.append(
+                {
+                    "attempt_index": idx,
+                    "generated_code": "while True:\n    pass",
+                    "stdout": "",
+                    "stderr": "timeout",
+                    "runtime_error": False,
+                    "timeout": True,
+                    "score": 0.0,
+                    "reflection": "Fix timeout caused by infinite loop." if idx > 1 else "",
+                    "retry_reason": "timeout",
+                }
+            )
+        elif category == "runtime_error":
+            attempts.append(
+                {
+                    "attempt_index": idx,
+                    "generated_code": "print(1 / 0)",
+                    "stdout": "",
+                    "stderr": "ZeroDivisionError: division by zero",
+                    "runtime_error": True,
+                    "timeout": False,
+                    "score": 0.0,
+                    "reflection": "Fix ZeroDivisionError and avoid division by zero." if idx > 1 else "",
+                    "retry_reason": "runtime_error",
+                }
+            )
+        else:
+            attempts.append(
+                {
+                    "attempt_index": idx,
+                    "generated_code": "print('wrong')",
+                    "stdout": "wrong",
+                    "stderr": "",
+                    "runtime_error": False,
+                    "timeout": False,
+                    "score": 0.0,
+                    "reflection": "Replace wrong output with the expected value." if idx > 1 else "",
+                    "retry_reason": "semantic_error",
+                }
+            )
+    return attempts
+
+
 def run_task_mock(task: dict[str, Any], output_dir: Path = RESULTS_DIR) -> dict[str, Any]:
     task_id = str(task.get("id", "unknown"))
     category = str(task.get("category", "unknown"))
@@ -105,6 +212,8 @@ def run_task_mock(task: dict[str, Any], output_dir: Path = RESULTS_DIR) -> dict[
         error_summary = "" if success else f"mock_{category}_failure"
 
     final_score = _exact_match_score(expected, final_output)
+    attempts = _mock_attempts_for_result(category, expected, success, num_attempts)
+    trajectory_analysis = _safe_analyze_trajectory(attempts)
 
     result = {
         "id": task_id,
@@ -121,11 +230,12 @@ def run_task_mock(task: dict[str, Any], output_dir: Path = RESULTS_DIR) -> dict[
         "recovered": recovered,
         "artifact_path": "",
         "error_summary": error_summary,
+        "trajectory_analysis": trajectory_analysis,
     }
     result["artifact_path"] = _write_task_artifact(
         output_dir,
         task_id,
-        {"task": task, "result": result, "mock": True},
+        {"task": task, "result": result, "attempts": attempts, "mock": True},
     )
     return result
 
@@ -182,6 +292,54 @@ def _extract_error_summary(closed_loop_result: dict[str, Any]) -> str:
     return str(last.get("error") or "")
 
 
+def _closed_loop_attempts_for_analysis(
+    closed_loop_result: dict[str, Any],
+    expected: Any,
+    final_output: Any,
+    final_score: float,
+) -> list[dict[str, Any]]:
+    attempts = []
+    trajectory = closed_loop_result.get("trajectory") or []
+
+    for index, attempt in enumerate(trajectory, 1):
+        step = _attempt_last_step(attempt)
+        sandbox = step.get("sandbox") or {}
+        eval_result = _attempt_eval(attempt)
+        runtime_error = bool(sandbox.get("runtime_error", eval_result.get("runtime_error", False)))
+        timeout = bool(sandbox.get("timeout", False))
+        stdout = _normalize_output(sandbox.get("stdout", step.get("observation", "")))
+
+        if index == len(trajectory):
+            score = final_score
+        else:
+            score = _exact_match_score(expected, stdout)
+
+        if timeout:
+            retry_reason = "timeout"
+        elif runtime_error:
+            retry_reason = "runtime_error"
+        elif score <= 0:
+            retry_reason = "semantic_error"
+        else:
+            retry_reason = ""
+
+        attempts.append(
+            {
+                "attempt_index": index,
+                "generated_code": step.get("generated_code", ""),
+                "stdout": stdout,
+                "stderr": sandbox.get("stderr", ""),
+                "runtime_error": runtime_error,
+                "timeout": timeout,
+                "score": score,
+                "reflection": attempt.get("input", "") if index > 1 else "",
+                "retry_reason": retry_reason,
+            }
+        )
+
+    return attempts
+
+
 def run_task_real(task: dict[str, Any], output_dir: Path = RESULTS_DIR) -> dict[str, Any]:
     from app.loop.closed_loop_runner import is_eval_success, run_closed_loop
 
@@ -200,6 +358,13 @@ def run_task_real(task: dict[str, Any], output_dir: Path = RESULTS_DIR) -> dict[
 
     report = closed_loop_result.get("reliability_report") or {}
     last_eval = _attempt_eval(_last_attempt(closed_loop_result))
+    analysis_attempts = _closed_loop_attempts_for_analysis(
+        closed_loop_result=closed_loop_result,
+        expected=expected,
+        final_output=final_output,
+        final_score=final_score,
+    )
+    trajectory_analysis = _safe_analyze_trajectory(analysis_attempts)
 
     result = {
         "id": task_id,
@@ -216,11 +381,18 @@ def run_task_real(task: dict[str, Any], output_dir: Path = RESULTS_DIR) -> dict[
         "recovered": recovered,
         "artifact_path": "",
         "error_summary": _extract_error_summary(closed_loop_result),
+        "trajectory_analysis": trajectory_analysis,
     }
     result["artifact_path"] = _write_task_artifact(
         output_dir,
         task_id,
-        {"task": task, "result": result, "closed_loop_result": closed_loop_result, "mock": False},
+        {
+            "task": task,
+            "result": result,
+            "attempts": analysis_attempts,
+            "closed_loop_result": closed_loop_result,
+            "mock": False,
+        },
     )
     return result
 
@@ -289,6 +461,26 @@ def build_markdown_report(summary: dict[str, Any], results: list[dict[str, Any]]
             "{avg_attempts} | {runtime_error_rate} | {timeout_rate} |".format(
                 category=category,
                 **metrics,
+            )
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Trajectory Reasoning",
+            "",
+            "| id | recovery_type | trajectory_quality | repeated_same_failure |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for result in results:
+        analysis = result.get("trajectory_analysis") or {}
+        lines.append(
+            "| {id} | {recovery_type} | {trajectory_quality} | {repeated_same_failure} |".format(
+                id=result.get("id"),
+                recovery_type=analysis.get("recovery_type", "unknown"),
+                trajectory_quality=analysis.get("trajectory_quality", "unknown"),
+                repeated_same_failure=analysis.get("repeated_same_failure", "unknown"),
             )
         )
 

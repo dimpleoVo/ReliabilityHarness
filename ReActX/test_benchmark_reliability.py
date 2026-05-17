@@ -23,6 +23,9 @@ def main():
         single = bench.run_task_mock(tasks[0], output_dir=output_dir)
         assert_task_result_schema(single)
         assert isinstance(single["recovered"], bool), "recovered field must be bool"
+        assert isinstance(single["trajectory_analysis"], dict), "trajectory_analysis must be present"
+        assert "recovery_type" in single["trajectory_analysis"], "recovery_type missing"
+        assert "trajectory_quality" in single["trajectory_analysis"], "trajectory_quality missing"
 
         rr_task = {
             "id": "rr_test",
@@ -37,6 +40,8 @@ def main():
         rr_result = bench.run_task_mock(rr_task, output_dir=output_dir)
         assert isinstance(rr_result["recovered"], bool), "recovered must be bool for recoverable_retry"
         assert rr_result["recovered"] is True, "recoverable_retry task must produce recovered=True"
+        assert rr_result["trajectory_analysis"]["recovery_type"] == "semantic_fix", rr_result
+        assert rr_result["trajectory_analysis"]["trajectory_quality"] == "good", rr_result
         rr_summary = bench.aggregate_results([rr_result])
         assert rr_summary["recovery_rate"] > 0, (
             f"recovery_rate should be > 0 when recoverable_retry tasks are included, got {rr_summary['recovery_rate']}"
@@ -58,6 +63,11 @@ def main():
                 "recovered": False,
                 "artifact_path": "",
                 "error_summary": "",
+                "trajectory_analysis": {
+                    "recovery_type": "unknown",
+                    "trajectory_quality": "partial",
+                    "repeated_same_failure": False,
+                },
             },
             {
                 "id": "b",
@@ -74,6 +84,11 @@ def main():
                 "recovered": False,
                 "artifact_path": "",
                 "error_summary": "wrong output",
+                "trajectory_analysis": {
+                    "recovery_type": "unrecovered",
+                    "trajectory_quality": "poor",
+                    "repeated_same_failure": True,
+                },
             },
         ]
         summary = bench.aggregate_results(sample_results)
@@ -94,6 +109,10 @@ def main():
         assert payload["summary"]["total_tasks"] == 2, payload
 
         md = md_path.read_text(encoding="utf-8")
+        assert "## Trajectory Reasoning" in md, md
+        assert "recovery_type" in md, md
+        assert "trajectory_quality" in md, md
+        assert "repeated_same_failure" in md, md
         assert "## Failed Tasks" in md, md
         assert "b [semantic_error]" in md, md
 
@@ -103,6 +122,10 @@ def main():
 
         run = bench.run_benchmark(limit=3, mock=True, output_dir=output_dir)
         assert run["summary"]["total_tasks"] == 3, run["summary"]
+        for result in run["results"]:
+            assert "trajectory_analysis" in result, result
+            assert "recovery_type" in result["trajectory_analysis"], result
+            assert "trajectory_quality" in result["trajectory_analysis"], result
         assert Path(run["paths"]["json"]).exists(), run["paths"]
         assert Path(run["paths"]["markdown"]).exists(), run["paths"]
 

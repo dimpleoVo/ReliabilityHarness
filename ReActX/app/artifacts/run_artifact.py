@@ -2,6 +2,8 @@ import json
 import os
 from datetime import datetime
 
+from app.reasoning.trajectory_analyzer import analyze_trajectory
+
 # Default save location: ReActX/runs/ (two levels above this file)
 _DEFAULT_RUNS_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "runs")
@@ -49,6 +51,39 @@ def _extract_attempt(entry: dict) -> dict:
     }
 
 
+def _analysis_score(attempt: dict) -> float:
+    if attempt.get("runtime_error") or attempt.get("timeout"):
+        return 0.0
+
+    raw_score = attempt.get("score")
+    metrics = (attempt.get("evaluation") or {}).get("metrics") or {}
+    edit_distance = metrics.get("edit_distance")
+
+    if edit_distance == 0 or raw_score == 0:
+        return 1.0
+
+    try:
+        return float(raw_score or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _build_trajectory_analysis(attempts: list[dict]) -> dict | None:
+    if not attempts:
+        return None
+
+    try:
+        reasoning_attempts = []
+        for attempt in attempts:
+            reasoning_attempt = dict(attempt)
+            reasoning_attempt["score"] = _analysis_score(attempt)
+            reasoning_attempts.append(reasoning_attempt)
+        return analyze_trajectory(reasoning_attempts)
+    except Exception as e:
+        print(f"[Artifact] WARNING: trajectory analysis failed: {e}")
+        return None
+
+
 def save_run_artifact(result: dict, task: str, runs_dir: str | None = None) -> str | None:
     """
     Persist a run artifact to disk. Never raises — failures are printed as warnings.
@@ -67,6 +102,8 @@ def save_run_artifact(result: dict, task: str, runs_dir: str | None = None) -> s
         final_eval = (trajectory_all[-1].get("eval") or {}) if trajectory_all else {}
         failure = (final_eval.get("failure") or {})
 
+        attempts = [_extract_attempt(entry) for entry in trajectory_all]
+
         artifact = {
             "task": task,
             "timestamp": timestamp.isoformat(),
@@ -75,7 +112,8 @@ def save_run_artifact(result: dict, task: str, runs_dir: str | None = None) -> s
             "final_score": reliability_report.get("final_score"),
             "failure_summary": failure.get("failure_summary", []),
             "memory_used": reliability_report.get("used_memory", False),
-            "attempts": [_extract_attempt(entry) for entry in trajectory_all],
+            "attempts": attempts,
+            "trajectory_analysis": _build_trajectory_analysis(attempts),
         }
 
         with open(filepath, "w", encoding="utf-8") as f:
