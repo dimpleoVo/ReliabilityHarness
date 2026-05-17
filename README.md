@@ -418,6 +418,18 @@ ReActX/reports/reliability_report.md
 
 ---
 
+# Reliability Evidence Examples
+
+Curated evidence examples are available for reviewing the reliability workflow without running LLMs or Docker:
+
+- [Run Artifact Example](ReActX/docs/examples/example_run_artifact.json)
+- [Benchmark Result Example](ReActX/docs/examples/example_benchmark_result.json)
+- [Trajectory Analysis Example](ReActX/docs/examples/example_trajectory_analysis.json)
+- [Reflection Evaluation Example](ReActX/docs/examples/example_reflection_evaluation.json)
+- [Interview Narrative](ReActX/docs/INTERVIEW_NARRATIVE.md)
+
+---
+
 # Project Positioning
 
 This project is NOT:

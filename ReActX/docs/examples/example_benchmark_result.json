@@ -1,0 +1,52 @@
+{
+  "total_tasks": 20,
+  "success_rate": 0.75,
+  "recovery_rate": 0.35,
+  "avg_attempts": 1.85,
+  "runtime_error_rate": 0.2,
+  "timeout_rate": 0.1,
+  "category_metrics": {
+    "runtime_error": {
+      "total": 4,
+      "success_rate": 0.75,
+      "recovery_rate": 0.5,
+      "avg_attempts": 2.0
+    },
+    "timeout": {
+      "total": 4,
+      "success_rate": 0.5,
+      "recovery_rate": 0.25,
+      "avg_attempts": 2.5
+    },
+    "semantic_error": {
+      "total": 4,
+      "success_rate": 0.75,
+      "recovery_rate": 0.25,
+      "avg_attempts": 1.75
+    },
+    "recoverable_retry": {
+      "total": 4,
+      "success_rate": 1.0,
+      "recovery_rate": 0.75,
+      "avg_attempts": 2.0
+    },
+    "memory_assisted": {
+      "total": 4,
+      "success_rate": 0.75,
+      "recovery_rate": 0.0,
+      "avg_attempts": 1.0
+    }
+  },
+  "failed_tasks": [
+    {
+      "id": "to_002",
+      "category": "timeout",
+      "error_summary": "timeout, max_retry_exhausted"
+    },
+    {
+      "id": "se_004",
+      "category": "semantic_error",
+      "error_summary": "semantic_error"
+    }
+  ]
+}

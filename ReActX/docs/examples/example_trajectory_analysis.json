@@ -1,0 +1,13 @@
+{
+  "num_attempts": 2,
+  "final_success": true,
+  "root_cause_identified": true,
+  "repeated_same_failure": false,
+  "reflection_effective": true,
+  "recovery_type": "runtime_fix",
+  "trajectory_quality": "good",
+  "failure_chain": [
+    "runtime_error",
+    "recovered"
+  ]
+}

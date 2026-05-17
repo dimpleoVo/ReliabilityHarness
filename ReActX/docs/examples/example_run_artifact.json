@@ -1,0 +1,43 @@
+{
+  "task": "Write Python code that prints 42.",
+  "success": true,
+  "num_attempts": 2,
+  "memory_used": false,
+  "attempts": [
+    {
+      "attempt_index": 1,
+      "generated_code": "print(1 / 0)",
+      "stdout": "",
+      "stderr": "ZeroDivisionError: division by zero",
+      "runtime_error": true,
+      "timeout": false,
+      "score": 0.0,
+      "reflection": null,
+      "retry_reason": "runtime_error"
+    },
+    {
+      "attempt_index": 2,
+      "generated_code": "print(42)",
+      "stdout": "42\n",
+      "stderr": "",
+      "runtime_error": false,
+      "timeout": false,
+      "score": 1.0,
+      "reflection": "Fix ZeroDivisionError by avoiding division by zero and print the required value.",
+      "retry_reason": ""
+    }
+  ],
+  "trajectory_analysis": {
+    "num_attempts": 2,
+    "final_success": true,
+    "root_cause_identified": true,
+    "repeated_same_failure": false,
+    "reflection_effective": true,
+    "recovery_type": "runtime_fix",
+    "trajectory_quality": "good",
+    "failure_chain": [
+      "runtime_error",
+      "recovered"
+    ]
+  }
+}

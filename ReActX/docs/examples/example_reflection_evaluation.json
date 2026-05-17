@@ -1,0 +1,7 @@
+{
+  "mentions_root_cause": true,
+  "suggests_actionable_fix": true,
+  "repeats_previous_failure": false,
+  "reflection_quality": "good",
+  "detected_error_type": "ZeroDivisionError"
+}
