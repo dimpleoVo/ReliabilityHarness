@@ -83,3 +83,13 @@ README_old_backup.md
 README_backup.md
 *.docx
 ~$*
+
+# runtime outputs
+ReActX/runs/
+ReActX/reports/
+ReActX/demo_runs/
+ReActX/demo_reports/
+
+# python
+__pycache__/
+*.pyc
