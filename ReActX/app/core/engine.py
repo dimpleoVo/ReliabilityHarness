@@ -1,8 +1,7 @@
 from app.core.code_sanitizer import CodeSanitizer
+from app.sandbox_client import SandboxClient
 import logging
-import os
 import uuid
-import requests
 
 print("🔥 ENGINE FILE:", __file__)
 
@@ -110,29 +109,10 @@ Remember:
      
 
         try:
-            _sandbox_base = os.getenv("SANDBOX_URL", "http://sandbox:9000").rstrip("/")
-            _execute_url = f"{_sandbox_base}/execute"
-            print(f"[Sandbox] using execute_url={_execute_url}")
+            _client = SandboxClient()
+            print(f"[Sandbox] using base_url={_client.base_url}")
 
-            resp = requests.post(
-                _execute_url,
-                json={"code": code, "timeout": 10},
-                timeout=15,
-            )
-
-            if resp.status_code != 200:
-                print(f"[Sandbox] request failed: status={resp.status_code} body={resp.text!r}")
-                return {
-                    "status": "error",
-                    "error": f"Sandbox HTTP {resp.status_code}",
-                    "generated_code": code,
-                    "raw_llm_response": gen["raw_response"],
-                    "stdout": "",
-                    "stderr": resp.text,
-                    "output": "",
-                }
-
-            out = resp.json()
+            out = _client.execute_python(code, timeout=10)
 
             stdout = (out.get("stdout") or "").strip()
             stderr = (out.get("stderr") or "").strip()

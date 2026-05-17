@@ -9,6 +9,7 @@ from app.loop.eval_adapter import trajectory_to_eval_sample
 from utils.dataset_loader import get_ground_truth
 from app.eval.evaluator import Evaluator
 from app.eval.failure_analyzer import FailureAnalyzer
+from app.artifacts.run_artifact import save_run_artifact
 
 # 🔥 memory
 from app.memory.store import FailureMemoryStore
@@ -528,6 +529,7 @@ def run_closed_loop(task):
     retry_effectiveness = compute_retry_effectiveness(
         trajectory_all=trajectory_all,
         reliability_report=reliability_report,
+        metric_name="edit_distance",  # score_before/score_after are edit_distance values (lower_is_better)
     )
 
     # Recompute with reliability_report so max_retry_exhausted can be detected
@@ -539,7 +541,7 @@ def run_closed_loop(task):
         reliability_report=reliability_report,
     )
 
-    return {
+    result = {
         "trajectory": trajectory_all,
         "final_answer": final_answer,
         "total_steps": len(trajectory_all),
@@ -555,3 +557,7 @@ def run_closed_loop(task):
         "tool_process_reliability": tool_process_reliability,
         "failure_taxonomy": failure_taxonomy,
     }
+
+    save_run_artifact(result, task=task)
+
+    return result
