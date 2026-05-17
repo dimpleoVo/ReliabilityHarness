@@ -1,424 +1,467 @@
 ReActX — AI Reliability Detection & Self-Healing Harness
 
-Overview
+# ReliabilityHarness
 
-ReActX is an evaluation-driven closed-loop Agent reliability system for LLM-based code generation.
+## 面向代码智能体的 AI Reliability Harness
 
-Instead of only generating and executing code, ReActX focuses on:
+ReliabilityHarness 是一个轻量级 AI Reliability Harness Prototype，
+用于研究代码智能体（Code Agents）在执行、失败、重试与恢复过程中的可靠性行为。
 
-* detecting reliability failures during Agent execution
-* evaluating execution correctness and process quality
-* retrying failed executions through reflection
-* recording failure-repair experiences
-* improving future executions using memory retrieval
+项目重点并不是构建一个“通用 Agent Framework”，
+而是聚焦：
 
-The system combines:
+- Sandbox Execution
+- Runtime Failure Capture
+- Evaluation-guided Retry
+- Failure Taxonomy
+- Reflection / Recovery
+- Structured Artifact Persistence
+- Reliability Reporting
 
-* ReActX → Agent runtime and execution loop
-* EvalForge → evaluation, failure attribution, and reliability analysis
-* Docker Sandbox → isolated code execution
-* Failure Memory + Chroma → retrieval-enhanced repair optimization
+核心理念：
 
-The project is designed as a lightweight:
+> Task Success ≠ Process Correctness
 
-AI Reliability Detection & Self-Healing Harness
+即：
+即使最终答案正确，
+Agent 的执行过程也可能包含：
 
-for Code Agents and future Tool-use / Workflow Agents.
+- Runtime Error
+- Timeout
+- 错误工具使用
+- 无效 Retry
+- 不稳定恢复行为
 
-⸻
+因此，
+ReliabilityHarness 更关注：
 
-Why AI Reliability Detection
+- Agent 为什么失败
+- Retry 是否真的有效
+- Reflection 是否改善结果
+- Memory Retrieval 是否帮助恢复
+- 如何保留完整执行证据
 
-Modern LLM Agents frequently fail in real execution environments.
+---
 
-Typical failure modes include:
+# System Architecture
 
-* runtime exceptions
-* hallucinated observations
-* malformed tool outputs
-* retry collapse
-* memory pollution
-* workflow inconsistency
-* sandbox execution failures
-* observation mismatch
-
-ReActX is designed to detect, classify, replay, and optimize these failures.
-
-The project focuses on:
-
-* execution reliability
-* process reliability
-* retry effectiveness
-* tool reliability
-* memory-guided repair
-* trace observability
-* failure attribution
-
-rather than only final-answer benchmarking.
-
-⸻
-
-System Architecture
-
-User / Frontend
-    ↓
-FastAPI Backend
-    ↓
-run_closed_loop()
-    ↓
-ReActXAgent
-    ↓
-CodeExecutionTool
-    ↓
-X_Service (LLM Code Generation)
-    ↓
-Docker Sandbox Execution
-    ↓
-EvalForge Evaluation
-    ↓
-Failure Taxonomy
-    ↓
-Reflection Retry
-    ↓
-Failure Memory Retrieval / Save
-    ↓
-Reliability Report + Trace Replay
-
-⸻
-
-Core Reliability Pipeline
-
+```text
 Task
-→ Agent Execution
-→ Code Generation
-→ Sandbox Execution
-→ Evaluation
-→ Failure Attribution
-→ Reflection
-→ Retry
-→ Reliability Analysis
-→ Memory Save
-→ Future Retrieval Optimization
-
-⸻
-
-Main Features
-
-1. Closed-loop Agent Runtime
-
-ReActX supports an evaluation-driven execution loop:
-
-* execute task
-* evaluate result
-* detect failures
-* generate reflection
-* retry automatically
-* store successful recovery experience
-
-Core entry:
-
-ReActX/app/loop/closed_loop_runner.py
-
-⸻
-
-2. Docker Sandbox Execution
-
-Generated Python code runs inside isolated Docker containers.
-
-Features:
-
-* isolated execution environment
-* stdout / stderr capture
-* runtime error detection
-* return_code tracking
-* tar-stream file injection
-* sandbox reliability analysis
-
-Sandbox endpoint:
-
-POST http://localhost:9000/execute
-
-⸻
-
-3. Reliability Detection
-
-The system detects multiple reliability failure types:
-
-Execution Reliability
-
-* syntax_error
-* runtime_exception
-* timeout
-* sandbox_http_error
-* empty_output
-
-Process Reliability
-
-* observation_mismatch
-* missing_tool_signal
-* malformed_step
-* retry_failure
-
-Memory Reliability
-
-* stale_memory
-* memory_pollution_risk
-* irrelevant_failure_fix_examples
-
-⸻
-
-4. Trajectory Observability
-
-Each Agent step records:
-
-thought
-action
-tool
-tool_input
-observation
-error
-latency
-generated_code
-sandbox
-
-Trajectory steps are attached to EvalForge meta for:
-
-* process-level evaluation
-* reliability replay
-* failure attribution
-* trace analysis
-
-⸻
-
-5. EvalForge Reliability Evaluation
-
-EvalForge provides:
-
-* metric evaluation
-* LLM Judge fallback
-* invalid output detection
-* failure taxonomy
-* weak slice analysis
-* risk region analysis
-* badcase analysis
-
-Current success evaluation logic includes:
-
-* runtime error detection
-* edit distance threshold
-* LLM Judge confidence
-* retry recovery status
-
-⸻
-
-6. Reflection Retry
-
-If execution fails:
-
-Failure
-→ Reflection Prompt
-→ Retry Generation
-→ Re-evaluation
-
-The retry controller supports:
-
-* multi-step retry
-* retry effectiveness analysis
-* score_before / score_after comparison
-* recovery detection
-
-⸻
-
-7. Failure Memory Retrieval
-
-ReActX stores failure-repair examples:
-
-Task
-Bad Code
-Error
-Fixed Code
-Fixed Output
-Score Improvement
-
-Memory is retrieved using Chroma vector search and injected into future prompts.
-
-Example:
-
-=== Similar Past Failure-Fix Examples ===
-Task:
-similar task minimal memory verification
-Bad Code:
-print(1 / 0)
-Error:
-ZeroDivisionError: division by zero
-Fixed Code:
-print(0)
-
-The system also includes a memory guard to reduce memory pollution risks.
-
-⸻
-
-8. Reliability Report
-
-Each closed-loop execution now produces:
-
-* reliability_report
-* reliability_events
-* tool_reliability
-* retry_effectiveness
-* coding_metrics
-* tool_process_reliability
-* failure_taxonomy
-
-These outputs summarize:
-
-* whether the task succeeded
-* whether retry recovered failure
-* whether memory was used
-* runtime error statistics
-* process reliability quality
-* tool execution consistency
-
-⸻
-
-9. Trace Replay
-
-The system supports execution replay using:
-
-replay_trace(result)
-
-Replay output includes:
-
-* Reliability Summary
-* Attempt Timeline
-* Generated Code
-* Sandbox Result
-* Reliability Events
-* Failure Taxonomy
-* Retry Effectiveness
-
-⸻
-
-API Endpoints
-
-Backend Health Check
-
-GET http://localhost:8000/health
-
-Run Agent
-
-POST http://localhost:8000/v1/agent/run
-
-Example:
-
-{
-  "query": "Write Python code that prints 42."
-  "history": []
-}
-
-Sandbox Health Check
-
-GET http://localhost:9000/health
-
+  ↓
+Agent Runtime
+  ↓
+Code Generation
+  ↓
 Sandbox Execution
+  ↓
+Evaluation
+  ↓
+Failure Analysis
+  ↓
+Reflection / Retry
+  ↓
+Artifact Persistence
+  ↓
+Reliability Report
+```
 
-POST http://localhost:9000/execute
+---
 
-⸻
+# Current Capabilities
 
-Project Structure
+## Runtime & Execution
 
+- Docker-based sandbox execution
+- Timeout enforcement
+- Runtime error capture
+- Structured execution result
+- SandboxClient unified execution interface
+
+## Reliability Loop
+
+- Evaluation-guided retry
+- Reflection-based retry reasoning
+- Metric direction-aware retry effectiveness
+- Failure taxonomy
+- Recovery tracking
+
+## Memory
+
+- Memory-assisted retry
+- Similar failure retrieval
+- Failure-fix pattern injection
+
+## Artifact & Reporting
+
+- Structured run artifact persistence
+- Retry trace preservation
+- Generated code preservation
+- stderr / timeout preservation
+- Reliability report generation
+
+---
+
+# Example Run Artifact
+
+```json
+{
+  "task": "Write Python code that prints 42",
+  "success": true,
+  "num_attempts": 2,
+  "memory_used": true,
+  "attempts": [
+    {
+      "attempt_index": 1,
+      "generated_code": "print(1 / 0)",
+      "runtime_error": true,
+      "stderr": "ZeroDivisionError"
+    },
+    {
+      "attempt_index": 2,
+      "generated_code": "print(42)",
+      "runtime_error": false,
+      "stdout": "42\n"
+    }
+  ]
+}
+```
+
+---
+
+# Reliability Report
+
+The system can aggregate multiple run artifacts and generate:
+
+- success_rate
+- runtime_error_rate
+- timeout_rate
+- retry_trigger_rate
+- recovery_rate
+- failure_type_distribution
+
+Generated outputs:
+
+```text
+ReActX/reports/reliability_report.json
+ReActX/reports/reliability_report.md
+```
+
+---
+
+# Project Positioning
+
+This project is NOT:
+
+- a production agent platform
+- a general-purpose agent framework
+- a multi-agent orchestration system
+- a scalable distributed runtime
+
+Instead,
+it is:
+
+> A lightweight AI Reliability Harness Prototype
+> focused on evaluation-driven recovery behavior
+> for code-generating agents.
+
+---
+
+# Repository Structure
+
+```text
 ReActX/
 ├── app/
-│   ├── agent/
+│   ├── artifacts/
+│   ├── reporting/
 │   ├── core/
 │   ├── loop/
 │   ├── memory/
-│   └── main_api.py
-├── evalforge/
+│   └── sandbox_client.py
+│
 ├── sandbox/
-├── frontend/
-├── infra/
-├── tests/
-└── data/
+├── runs/
+├── reports/
+├── docs/
+├── data/
+└── tests/
+```
 
-⸻
+---
 
-Current Implemented Capabilities
+# Key Reliability Features
 
-Implemented and verified:
+| Feature | Description |
+|---|---|
+| Sandbox Execution | Docker-isolated code execution |
+| Timeout Enforcement | Prevent infinite execution |
+| Runtime Error Capture | Preserve stderr and failure evidence |
+| Retry Evaluation | Measure retry effectiveness |
+| Failure Taxonomy | Categorize runtime / semantic failures |
+| Artifact Persistence | Save structured execution traces |
+| Reliability Reporting | Aggregate recovery metrics |
 
-* DeepSeek-based code generation
-* Docker sandbox execution
-* trajectory logging
-* EvalForge evaluation adapter
-* reflection retry
-* failure memory retrieval
-* Chroma integration
-* reliability report generation
-* failure taxonomy
-* retry effectiveness analysis
-* trace replay
-* process-level trajectory meta injection
+---
 
-⸻
+# Current Focus
 
-Current Limitations
+Current development focuses on:
 
-Current system limitations:
+- AI reliability engineering
+- evaluation-driven retry
+- recovery measurement
+- failure analysis
+- structured execution evidence
+- lightweight agent runtime reliability
 
-* ReActXAgent is currently a single-step code execution agent
-* multi-tool orchestration is still limited
-* full workflow reliability analysis is not finished
-* some tests require environment dependencies:
-    * DEEPSEEK_API_KEY
-    * chromadb
-* README was previously corrupted and rebuilt
-* some legacy evaluation modules were removed during migration
+---
 
-⸻
+# Future Directions
 
-Future Improvements
+Potential future directions include:
 
-Planned future upgrades:
+- stronger failure classification
+- trajectory-level evaluation
+- process correctness analysis
+- reliability benchmark datasets
+- lightweight observability
+- evaluation-driven agent evolution
 
-* multi-tool Agent runtime
-* Browser / Search / File tools
-* workflow-level reliability evaluation
-* memory quality scoring
-* long-running Agent support
-* async task scheduling
-* distributed reliability tracing
-* online evaluation dashboard
-* reliability benchmark suite
+---
 
-⸻
 
-Technology Stack
 
-* Python
-* FastAPI
-* Docker SDK
-* ChromaDB
-* httpx
-* LangChain
-* Streamlit
+# ReliabilityHarness
 
-⸻
+## AI Reliability Harness for Code Agents
 
-Vision
+ReliabilityHarness is a lightweight AI reliability harness prototype
+designed to study the reliability behavior of code-generating agents
+during execution, failure, retry, and recovery.
 
-ReActX is not only a code-generation Agent project.
+The project is NOT focused on building a general-purpose agent framework.
 
-The long-term goal is:
+Instead, it focuses on:
 
-building reliable, observable, self-healing AI execution systems.
+- Sandbox Execution
+- Runtime Failure Capture
+- Evaluation-guided Retry
+- Failure Taxonomy
+- Reflection / Recovery
+- Structured Artifact Persistence
+- Reliability Reporting
 
-The project explores how LLM-based Agents can:
+Core idea:
 
-* execute safely
-* recover from failures
-* improve from experience
-* expose reliability signals
-* support process-level evaluation
-* evolve through evaluation-driven optimization
+> Task Success ≠ Process Correctness
+
+Even if the final answer is correct,
+the execution process may still contain:
+
+- Runtime errors
+- Timeouts
+- Incorrect tool usage
+- Ineffective retries
+- Unstable recovery behavior
+
+Therefore,
+ReliabilityHarness focuses on:
+
+- Why agents fail
+- Whether retries actually improve outcomes
+- Whether reflection improves recovery
+- Whether memory retrieval helps repair failures
+- How to preserve execution evidence
+
+---
+
+# System Architecture
+
+```text
+Task
+  ↓
+Agent Runtime
+  ↓
+Code Generation
+  ↓
+Sandbox Execution
+  ↓
+Evaluation
+  ↓
+Failure Analysis
+  ↓
+Reflection / Retry
+  ↓
+Artifact Persistence
+  ↓
+Reliability Report
+```
+
+---
+
+# Current Capabilities
+
+## Runtime & Execution
+
+- Docker-based sandbox execution
+- Timeout enforcement
+- Runtime error capture
+- Structured execution results
+- SandboxClient unified execution interface
+
+## Reliability Loop
+
+- Evaluation-guided retry
+- Reflection-based retry reasoning
+- Metric direction-aware retry effectiveness
+- Failure taxonomy
+- Recovery tracking
+
+## Memory
+
+- Memory-assisted retry
+- Similar failure retrieval
+- Failure-fix pattern injection
+
+## Artifact & Reporting
+
+- Structured run artifact persistence
+- Retry trace preservation
+- Generated code preservation
+- stderr / timeout preservation
+- Reliability report generation
+
+---
+
+# Example Run Artifact
+
+```json
+{
+  "task": "Write Python code that prints 42",
+  "success": true,
+  "num_attempts": 2,
+  "memory_used": true,
+  "attempts": [
+    {
+      "attempt_index": 1,
+      "generated_code": "print(1 / 0)",
+      "runtime_error": true,
+      "stderr": "ZeroDivisionError"
+    },
+    {
+      "attempt_index": 2,
+      "generated_code": "print(42)",
+      "runtime_error": false,
+      "stdout": "42\n"
+    }
+  ]
+}
+```
+
+---
+
+# Reliability Report
+
+The system aggregates multiple run artifacts and generates:
+
+- success_rate
+- runtime_error_rate
+- timeout_rate
+- retry_trigger_rate
+- recovery_rate
+- failure_type_distribution
+
+Generated outputs:
+
+```text
+ReActX/reports/reliability_report.json
+ReActX/reports/reliability_report.md
+```
+
+---
+
+# Project Positioning
+
+This project is NOT:
+
+- a production agent platform
+- a general-purpose agent framework
+- a multi-agent orchestration system
+- a scalable distributed runtime
+
+Instead,
+it is:
+
+> A lightweight AI Reliability Harness Prototype
+> focused on evaluation-driven recovery behavior
+> for code-generating agents.
+
+---
+
+# Repository Structure
+
+```text
+ReActX/
+├── app/
+│   ├── artifacts/
+│   ├── reporting/
+│   ├── core/
+│   ├── loop/
+│   ├── memory/
+│   └── sandbox_client.py
+│
+├── sandbox/
+├── runs/
+├── reports/
+├── docs/
+├── data/
+└── tests/
+```
+
+---
+
+# Key Reliability Features
+
+| Feature | Description |
+|---|---|
+| Sandbox Execution | Docker-isolated code execution |
+| Timeout Enforcement | Prevent infinite execution |
+| Runtime Error Capture | Preserve stderr and failure evidence |
+| Retry Evaluation | Measure retry effectiveness |
+| Failure Taxonomy | Categorize runtime / semantic failures |
+| Artifact Persistence | Save structured execution traces |
+| Reliability Reporting | Aggregate recovery metrics |
+
+---
+
+# Current Focus
+
+Current development focuses on:
+
+- AI reliability engineering
+- evaluation-driven retry
+- recovery measurement
+- failure analysis
+- structured execution evidence
+- lightweight agent runtime reliability
+
+---
+
+# Future Directions
+
+Potential future directions include:
+
+- stronger failure classification
+- trajectory-level evaluation
+- process correctness analysis
+- reliability benchmark datasets
+- lightweight observability
+- evaluation-driven agent evolution
+
+---
+
+# Disclaimer
+
+This project is currently a research-oriented engineering prototype.
+
+The focus is reliability experimentation and evaluation workflows,
+not production deployment.
