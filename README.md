@@ -1,6 +1,8 @@
-ReActX — AI Reliability Detection & Self-Healing Harness
-
 # ReliabilityHarness
+
+AI Reliability Harness for Code Agents
+
+Built on top of the ReActX runtime.
 
 ## 面向代码智能体的 AI Reliability Harness
 
@@ -63,6 +65,43 @@ Reflection / Retry
 Artifact Persistence
   ↓
 Reliability Report
+```
+
+```mermaid
+flowchart TD
+
+    Task([Task]) --> Mem
+
+    Mem["Memory Retrieval"]
+    Mem --> Agent
+
+    Agent["ReActXAgent"]
+    Agent --> LLM
+
+    LLM["LLM Engine"]
+    LLM --> SC
+
+    subgraph Sandbox
+        SC["SandboxClient"]
+        SC --> Exec["Docker Executor"]
+    end
+
+    Exec --> Eval
+
+    subgraph Evaluation
+        Eval["Evaluator"]
+    end
+
+    Eval --> Gate{Pass?}
+
+    Gate -->|Yes| Artifact
+    Gate -->|Retry| Reflection
+
+    Reflection["Reflection / Retry"]
+    Reflection --> Agent
+
+    Artifact["Run Artifact"]
+    Artifact --> Report["Reliability Report"]
 ```
 
 ---
