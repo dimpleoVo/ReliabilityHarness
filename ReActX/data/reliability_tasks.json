@@ -1,162 +1,262 @@
 [
   {
-    "id": "task_001",
-    "category": "print",
-    "task": "Write Python code that prints the number 42.",
-    "expected_output": "42",
-    "expected_failure_modes": [],
-    "difficulty": "easy"
+    "id": "re_001",
+    "category": "runtime_error",
+    "task": "Write Python code that prints the last element of the list [10, 20, 30].",
+    "expected_output": "30",
+    "failure_mode": "runtime_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs often use index 3 (off-by-one) on a length-3 list, causing IndexError.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_002",
-    "category": "arithmetic",
-    "task": "Write Python code that prints the result of adding 7 and 15.",
-    "expected_output": "22",
-    "expected_failure_modes": [],
-    "difficulty": "easy"
+    "id": "re_002",
+    "category": "runtime_error",
+    "task": "Write Python code that prints the value associated with key 'score' in the dictionary {'score': 99}.",
+    "expected_output": "99",
+    "failure_mode": "runtime_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs sometimes access a mistyped key string, causing KeyError on first attempt.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_003",
-    "category": "string",
-    "task": "Write Python code that prints the string 'hello world' converted to uppercase.",
-    "expected_output": "HELLO WORLD",
-    "expected_failure_modes": ["format_mismatch"],
-    "difficulty": "easy"
+    "id": "re_003",
+    "category": "runtime_error",
+    "task": "Write Python code that prints the integer floor of dividing 17 by 3.",
+    "expected_output": "5",
+    "failure_mode": "runtime_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may use regular division then miscast to int, or accidentally divide by zero in a template.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_004",
-    "category": "string",
-    "task": "Write Python code that prints the reverse of the string 'hello'.",
-    "expected_output": "olleh",
-    "expected_failure_modes": ["semantic_error"],
-    "difficulty": "easy"
+    "id": "re_004",
+    "category": "runtime_error",
+    "task": "Write Python code that prints the square root of 144 as an integer.",
+    "expected_output": "12",
+    "failure_mode": "runtime_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs often use math.sqrt without importing math, causing NameError on first attempt.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_005",
-    "category": "list",
-    "task": "Write Python code that prints the sorted version of the list [3, 1, 4, 1, 5].",
-    "expected_output": "[1, 1, 3, 4, 5]",
-    "expected_failure_modes": ["format_mismatch"],
-    "difficulty": "easy"
+    "id": "to_001",
+    "category": "timeout",
+    "task": "Write Python code that prints all integers from 1 to 5, each on its own line.",
+    "expected_output": "1\n2\n3\n4\n5",
+    "failure_mode": "timeout",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may generate a while True loop without a termination condition, causing the sandbox to hang.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_006",
-    "category": "arithmetic",
-    "task": "Write Python code that prints the result of 2 raised to the power of 8.",
-    "expected_output": "256",
-    "expected_failure_modes": [],
-    "difficulty": "easy"
+    "id": "to_002",
+    "category": "timeout",
+    "task": "Write Python code that prints the sum of all integers from 1 to 100.",
+    "expected_output": "5050",
+    "failure_mode": "timeout",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may write a while loop that never increments its counter, running indefinitely.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_007",
-    "category": "list",
-    "task": "Write Python code that prints the maximum value in the list [5, 2, 8, 1, 9, 3].",
-    "expected_output": "9",
-    "expected_failure_modes": [],
-    "difficulty": "easy"
+    "id": "to_003",
+    "category": "timeout",
+    "task": "Write Python code that prints the countdown from 5 to 1, one number per line.",
+    "expected_output": "5\n4\n3\n2\n1",
+    "failure_mode": "timeout",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may increment instead of decrement in a while loop, producing an infinite countdown.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_008",
-    "category": "arithmetic",
-    "task": "Write Python code that prints the sum of all integers from 1 to 10 inclusive.",
-    "expected_output": "55",
-    "expected_failure_modes": ["semantic_error"],
-    "difficulty": "medium"
+    "id": "to_004",
+    "category": "timeout",
+    "task": "Write Python code that prints each character of the string 'abc', one per line.",
+    "expected_output": "a\nb\nc",
+    "failure_mode": "timeout",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may use while-based iteration without advancing the index variable, hanging the sandbox.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_009",
-    "category": "string",
+    "id": "se_001",
+    "category": "semantic_error",
     "task": "Write Python code that prints the number of characters in the string 'reliability'.",
     "expected_output": "11",
-    "expected_failure_modes": ["semantic_error"],
-    "difficulty": "easy"
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may count by splitting on spaces or miscounting vowels, producing a wrong integer.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_010",
-    "category": "format",
-    "task": "Write Python code that prints the value of pi rounded to exactly 2 decimal places.",
-    "expected_output": "3.14",
-    "expected_failure_modes": ["format_mismatch"],
-    "difficulty": "medium"
+    "id": "se_002",
+    "category": "semantic_error",
+    "task": "Write Python code that prints 'odd' if 7 is odd, or 'even' if 7 is even.",
+    "expected_output": "odd",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs sometimes invert the modulo condition or swap the labels, outputting 'even' for an odd number.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_011",
-    "category": "format",
-    "task": "Write Python code that prints the integer result of dividing 100 by 4. The output must be an integer, not a float.",
-    "expected_output": "25",
-    "expected_failure_modes": ["format_mismatch"],
-    "difficulty": "medium"
-  },
-  {
-    "id": "task_012",
-    "category": "edge_case",
-    "task": "Write Python code that prints whether the string 'racecar' is a palindrome. Output exactly True or False.",
-    "expected_output": "True",
-    "expected_failure_modes": ["semantic_error", "format_mismatch"],
-    "difficulty": "medium"
-  },
-  {
-    "id": "task_013",
-    "category": "control_flow",
-    "task": "Write Python code that prints all even numbers from 2 to 10 inclusive, each on a separate line.",
-    "expected_output": "2\n4\n6\n8\n10",
-    "expected_failure_modes": ["format_mismatch", "semantic_error"],
-    "difficulty": "medium"
-  },
-  {
-    "id": "task_014",
-    "category": "list",
-    "task": "Write Python code that prints the element at index 1 of the list [10, 20, 30, 40, 50].",
-    "expected_output": "20",
-    "expected_failure_modes": [],
-    "difficulty": "easy"
-  },
-  {
-    "id": "task_015",
-    "category": "edge_case",
-    "task": "Write Python code that prints the length of an empty list.",
-    "expected_output": "0",
-    "expected_failure_modes": [],
-    "difficulty": "easy"
-  },
-  {
-    "id": "task_016",
-    "category": "arithmetic",
-    "task": "Write Python code that prints the 10th Fibonacci number, where the sequence starts F(1)=1, F(2)=1, F(3)=2.",
-    "expected_output": "55",
-    "expected_failure_modes": ["semantic_error", "runtime_error"],
-    "difficulty": "hard"
-  },
-  {
-    "id": "task_017",
-    "category": "string",
-    "task": "Write Python code that prints the number of vowels (a, e, i, o, u, case-insensitive) in the string 'programming'.",
+    "id": "se_003",
+    "category": "semantic_error",
+    "task": "Write Python code that prints the number of uppercase letters in the string 'PyThOn'.",
     "expected_output": "3",
-    "expected_failure_modes": ["semantic_error"],
-    "difficulty": "medium"
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may count all letters or count lowercase letters instead of uppercase, giving a wrong count.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_018",
-    "category": "list",
-    "task": "Write Python code that prints the second largest unique number in the list [3, 1, 4, 1, 5, 9, 2, 6, 5].",
-    "expected_output": "6",
-    "expected_failure_modes": ["semantic_error", "runtime_error"],
-    "difficulty": "hard"
+    "id": "se_004",
+    "category": "semantic_error",
+    "task": "Write Python code that prints the average of the list [10, 20, 30, 40, 50] as an integer.",
+    "expected_output": "30",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs often print a float (30.0) or compute the wrong sum, failing exact-match evaluation.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_019",
-    "category": "failure_prone",
-    "task": "Write Python code that prints the factorial of 10.",
-    "expected_output": "3628800",
-    "expected_failure_modes": ["semantic_error", "runtime_error"],
-    "difficulty": "medium"
+    "id": "rr_001",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints the binary representation of 42 without the '0b' prefix.",
+    "expected_output": "101010",
+    "failure_mode": "semantic_error",
+    "difficulty": "medium",
+    "why_relevant": "LLMs often return bin(42) verbatim as '0b101010'; reflection on the prefix error guides the fix.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   },
   {
-    "id": "task_020",
-    "category": "timeout_risk",
-    "task": "Write Python code that prints the count of prime numbers less than 10000.",
-    "expected_output": "1229",
-    "expected_failure_modes": ["timeout", "semantic_error"],
-    "difficulty": "hard"
+    "id": "rr_002",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints the string 'hello' with each character separated by a hyphen.",
+    "expected_output": "h-e-l-l-o",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs often use space or comma as separator; reflection on wrong output guides the correct hyphen fix.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  {
+    "id": "rr_003",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints only the FizzBuzz label for the number 15. Output exactly one word.",
+    "expected_output": "FizzBuzz",
+    "failure_mode": "semantic_error",
+    "difficulty": "medium",
+    "why_relevant": "LLMs often print all FizzBuzz values from 1 to 15; reflection on excess output guides the single-value fix.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  {
+    "id": "rr_004",
+    "category": "recoverable_retry",
+    "task": "Write Python code that prints the count of the letter 'l' in the string 'hello world'.",
+    "expected_output": "3",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may count case-insensitively or stop at the first word; retry reflection corrects the full-string count.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  {
+    "id": "ma_001",
+    "category": "memory_assisted",
+    "task": "Write Python code that prints 'Hello, World!'",
+    "expected_output": "Hello, World!",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "Classic greeting task; memory of prior format errors guides capitalization and punctuation fixes.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  {
+    "id": "ma_002",
+    "category": "memory_assisted",
+    "task": "Write Python code that prints the result of 2 raised to the power of 10.",
+    "expected_output": "1024",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may confuse base and exponent order; memory of a prior power-of-2 fix accelerates correction.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  {
+    "id": "ma_003",
+    "category": "memory_assisted",
+    "task": "Write Python code that prints the first 5 elements of the list [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as a Python list literal.",
+    "expected_output": "[1, 2, 3, 4, 5]",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may use wrong slice bounds or print format; memory of prior list-slicing failures guides correction.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
+  },
+  {
+    "id": "ma_004",
+    "category": "memory_assisted",
+    "task": "Write Python code that prints the uppercase version of the string 'hello'.",
+    "expected_output": "HELLO",
+    "failure_mode": "semantic_error",
+    "difficulty": "easy",
+    "why_relevant": "LLMs may use wrong string method or add extra characters; memory of prior .upper() failures guides the fix.",
+    "evaluation": {
+      "metric": "exact_match",
+      "direction": "higher_is_better"
+    }
   }
 ]
