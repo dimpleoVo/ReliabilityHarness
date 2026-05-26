@@ -42,9 +42,16 @@ data/failure_memory.jsonl
 data/generated/
 data/tmp/
 data/cache/
-outputs/
-runs/
-reports/generated/
+data/chroma_db_data/
+
+# Generated outputs (canonical outputs/ tree — contents ignored, .gitkeep preserved)
+# Leading / anchors these to repo root only, so outputs/runs/ is NOT caught here
+outputs/*
+/runs/
+/reports/
+/artifacts/
+/benchmark_results/
+/eval_data/
 
 # Docker / runtime
 *.log
@@ -93,3 +100,21 @@ ReActX/demo_reports/
 # python
 __pycache__/
 *.pyc
+
+# ── Do NOT ignore: .env template, configs, data fixtures, directory scaffolding ──
+# Un-ignore outputs/ subdirectories FIRST (parent must be un-ignored before contents)
+!.env.example
+!configs/*.yaml
+!data/tasks/*.json
+!data/reliability_tasks.json
+!data/.gitkeep
+!data/tasks/.gitkeep
+!outputs/.gitkeep
+!outputs/runs/
+!outputs/runs/.gitkeep
+!outputs/reports/
+!outputs/reports/.gitkeep
+!outputs/predictions/
+!outputs/predictions/.gitkeep
+!outputs/benchmark_results/
+!outputs/benchmark_results/.gitkeep

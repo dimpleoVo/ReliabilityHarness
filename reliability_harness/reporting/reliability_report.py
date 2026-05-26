@@ -1,6 +1,6 @@
 """
 Minimal reliability report generator.
-Reads run_*.json artifacts from runs/ and writes JSON + Markdown to reports/.
+Reads run_*.json artifacts from outputs/runs/ and writes JSON + Markdown to outputs/reports/.
 No LLM, no database, no dashboard — pure file I/O and arithmetic.
 """
 import json
@@ -9,9 +9,11 @@ from collections import Counter
 from pathlib import Path
 from statistics import mean
 
-# Resolved relative to this file: repo-level runs/ and repo-level reports/ (three levels up from reliability_harness/reporting/)
-_DEFAULT_RUNS_DIR = Path(__file__).parent.parent.parent / "runs"
-_DEFAULT_REPORTS_DIR = Path(__file__).parent.parent.parent / "reports"
+from reliability_harness.utils.paths import RUNS_ROOT, REPORTS_ROOT
+
+# Default I/O paths resolved from repo root via paths module
+_DEFAULT_RUNS_DIR = RUNS_ROOT
+_DEFAULT_REPORTS_DIR = REPORTS_ROOT
 
 
 # ---------------------------------------------------------------------------

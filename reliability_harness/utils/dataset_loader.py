@@ -3,25 +3,46 @@ import os
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
-from reliability_harness.utils.paths import LEGACY_REACTX_ROOT
+from reliability_harness.utils.paths import DATA_ROOT, TASKS_ROOT, LEGACY_REACTX_ROOT
 
-_DATASET_FILENAME = "data/tasks/reactx_closed_loop_tasks.json"
-# temporary legacy data path — container mounts repo at /app, data still lives under ReActX/;
-# to be updated when data/ is moved to repo root in Migration-2
-_LEGACY_DOCKER_DATA_PATH = Path("/app/ReActX") / _DATASET_FILENAME
-# legacy local path — points into ReActX/ subdir until data/ is migrated in Migration-2
-_LEGACY_REACTX_DATA_ROOT = LEGACY_REACTX_ROOT
+# Canonical task file names
+_TASKS_FILE = "reliability_tasks.json"
+_LEGACY_TASKS_FILE = "reactx_closed_loop_tasks.json"
+
+# Legacy Docker fallback — /app is repo root mount, data still under ReActX/; remove in Migration-3
+_LEGACY_DOCKER_PATH = Path("/app/ReActX") / "data" / "tasks" / _LEGACY_TASKS_FILE
 
 
 def _resolve_dataset_path() -> Path:
     candidates = []
 
+    # 1. RELIABILITY_HARNESS_DATASET_PATH — primary env override
+    env = os.environ.get("RELIABILITY_HARNESS_DATASET_PATH")
+    if env:
+        candidates.append(Path(env))
+
+    # 2. DATASET_PATH — secondary env override
+    env = os.environ.get("DATASET_PATH")
+    if env:
+        candidates.append(Path(env))
+
+    # 3. REACTX_DATASET_PATH — legacy env fallback
     env = os.environ.get("REACTX_DATASET_PATH")
     if env:
         candidates.append(Path(env))
 
-    candidates.append(_LEGACY_REACTX_DATA_ROOT / _DATASET_FILENAME)
-    candidates.append(_LEGACY_DOCKER_DATA_PATH)
+    # 4–5. Canonical data/ paths (preferred once data/ is populated)
+    candidates.append(DATA_ROOT / _TASKS_FILE)
+    candidates.append(TASKS_ROOT / _TASKS_FILE)
+
+    # 6–8. Legacy ReActX/ paths — kept until Migration-3 moves data/
+    candidates.append(TASKS_ROOT / _LEGACY_TASKS_FILE)
+    candidates.append(LEGACY_REACTX_ROOT / "data" / _TASKS_FILE)
+    candidates.append(LEGACY_REACTX_ROOT / "data" / _LEGACY_TASKS_FILE)
+    candidates.append(LEGACY_REACTX_ROOT / "data" / "tasks" / _LEGACY_TASKS_FILE)
+
+    # 9. Legacy Docker path — to be removed in Migration-3
+    candidates.append(_LEGACY_DOCKER_PATH)
 
     for p in candidates:
         if p.exists():

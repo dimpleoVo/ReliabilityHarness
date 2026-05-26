@@ -67,15 +67,49 @@
 
 ---
 
-## Migration-2B: Data directory migration (next)
+## Migration-2B-1: Unify data root and generated output paths (completed)
+
+**Branch:** `migration/reliability-harness-structure`
+
+### What Migration-2B-1 completes
+
+1. Establishes canonical constants in `reliability_harness/utils/paths.py`:
+   - Input: `DATA_ROOT`, `TASKS_ROOT`, `CHROMA_DB_ROOT`, `FAILURE_MEMORY_PATH`
+   - Output: `OUTPUTS_ROOT`, `RUNS_ROOT`, `REPORTS_ROOT`, `PREDICTIONS_ROOT`, `BENCHMARK_RESULTS_ROOT`
+   - Helper functions: `tasks_path()`, `failure_memory_path()`, `runs_path()`, `reports_path()`, `predictions_path()`, `benchmark_results_path()`
+2. Updates `dataset_loader.py`: new env var priority (`RELIABILITY_HARNESS_DATASET_PATH` > `DATASET_PATH` > `REACTX_DATASET_PATH`); canonical `data/` paths checked first; `ReActX/` paths kept as legacy fallback until Migration-3.
+3. Updates `memory/store.py`: default failure memory path is now `FAILURE_MEMORY_PATH` (`data/failure_memory.jsonl`), not cwd-relative.
+4. Updates `artifacts/run_artifact.py`: default run artifact output is now `RUNS_ROOT` (`outputs/runs/`).
+5. Updates `reporting/reliability_report.py`: default I/O is now `RUNS_ROOT` / `REPORTS_ROOT` (`outputs/runs/`, `outputs/reports/`).
+6. Fixes `docker/docker-compose.yml` Chroma volume: `../chroma_db` → `../data/chroma_db_data` (host path now matches container path).
+7. Updates `configs/benchmark_eval.yaml`: `prediction_output_root: eval_data/runs` → `outputs/predictions`.
+8. Creates `data/`, `data/tasks/`, `outputs/`, `outputs/runs/`, `outputs/reports/`, `outputs/predictions/`, `outputs/benchmark_results/` directory scaffolding via `.gitkeep`.
+9. Updates `.gitignore`: generated output contents ignored, `.gitkeep` files and task fixtures preserved; `!.env.example` added.
+10. Updates `.env.example`: documents new `RELIABILITY_HARNESS_DATASET_PATH` and `DATASET_PATH` overrides.
+
+### What Migration-2B-1 does NOT change
+
+- No evaluation semantics, agent logic, retry/reflection/memory retrieval behavior.
+- No business logic in `closed_loop_runner.py`, `evaluator.py`, or metric modules.
+- `ReActX/data/` is **not moved** — legacy data files remain in place; `dataset_loader.py` keeps `ReActX/` as final fallback.
+- Historical benchmark result JSON in `ReActX/benchmark_results/` is not moved.
+- `ReActX/app/` and `ReActX/evalforge/` not deleted.
+- `ReActX/test_*.py` not migrated.
+- No MBPP/HumanEval/SWE-bench changes.
+- `reactx_failure_memory` collection name not renamed (Migration-3).
+- `ReActXAgent` class name not renamed (Migration-3).
+
+---
+
+## Migration-2B-2: Physical data migration (next)
 
 Planned scope:
-- Move `ReActX/data/` → `data/` (repo root).
-- Move `ReActX/benchmark_results/` → `benchmark_results/` (repo root).
-- Move host `chroma_db/` → `data/chroma_db_data/` to match container path.
-- Update `reliability_harness/utils/dataset_loader.py`: replace `_LEGACY_REACTX_DATA_ROOT` with `DATA_ROOT` from paths.
-- Update `reliability_harness/memory/store.py` if it holds legacy paths.
-- Update `REACTX_DATASET_PATH` env var docs.
+- Copy `ReActX/data/tasks/reactx_closed_loop_tasks.json` → `data/tasks/reliability_tasks.json`.
+- Copy `ReActX/data/reliability_tasks.json` if present → `data/`.
+- Move host `chroma_db_data/` content → `data/chroma_db_data/` (after service stop).
+- Move `ReActX/benchmark_results/` → `outputs/benchmark_results/` (historical data).
+- After copy verified: remove legacy fallback paths from `dataset_loader.py`.
+- Update `REACTX_DATASET_PATH` references to use new name.
 
 Each phase must be committed separately.
 

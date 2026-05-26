@@ -65,6 +65,33 @@ bash scripts/run_benchmark_mock.sh
 
 ---
 
+## Data and Output Paths
+
+All paths are resolved from repo root via `reliability_harness.utils.paths` — no `os.getcwd()` dependency.
+
+| Purpose | Path |
+|---|---|
+| Task fixtures | `data/tasks/` |
+| Canonical dataset file | `data/reliability_tasks.json` |
+| Failure memory (JSONL) | `data/failure_memory.jsonl` |
+| Chroma vector DB | `data/chroma_db_data/` |
+| Run artifacts | `outputs/runs/` |
+| Reliability reports | `outputs/reports/` |
+| Benchmark predictions | `outputs/predictions/` |
+| Benchmark summaries | `outputs/benchmark_results/` |
+
+Environment variable overrides (in priority order):
+
+| Variable | Purpose |
+|---|---|
+| `RELIABILITY_HARNESS_DATASET_PATH` | Primary dataset path override |
+| `DATASET_PATH` | Secondary dataset path override |
+| `REACTX_DATASET_PATH` | Legacy fallback (kept for backwards compat) |
+
+See `.env.example` for a full template.
+
+---
+
 ## Docker
 
 All Docker configuration lives under `docker/` at repo root.
@@ -96,7 +123,7 @@ Notes:
 - `.env` at repo root is **optional** for static config validation; required for real API calls.
 - `docker/backend.Dockerfile` uses `requirements.txt` at repo root.
 - `docker/sandbox.Dockerfile` uses `docker/sandbox.requirements.txt`.
-- Chroma data is mounted from `chroma_db/` at repo root into the container at `/app/data/chroma_db_data`.
+- Chroma data is mounted from `data/chroma_db_data/` at repo root into the container at `/app/data/chroma_db_data`.
 - `docker/docker-compose.yml` reads `.env` from repo root (`../.env` relative to the compose file); if the file is absent, Docker Compose proceeds without it.
 
 ---

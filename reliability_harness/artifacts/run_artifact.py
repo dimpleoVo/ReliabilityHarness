@@ -3,11 +3,10 @@ import os
 from datetime import datetime
 
 from reliability_harness.reasoning.trajectory_analyzer import analyze_trajectory
+from reliability_harness.utils.paths import RUNS_ROOT
 
-# Default save location: repo-level runs/ (two levels up: reliability_harness/artifacts/ → reliability_harness/ → repo root)
-_DEFAULT_RUNS_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "runs")
-)
+# Default save location: outputs/runs/ (resolved via paths.RUNS_ROOT, independent of cwd)
+_DEFAULT_RUNS_DIR = RUNS_ROOT
 
 
 def _derive_final_success(entry: dict, runtime_error: bool, score, eval_result: dict) -> bool:

@@ -5,7 +5,7 @@ project:
   name: ReliabilityHarness
   run_name: demo_benchmark
   output_dir: outputs
-  prediction_output_root: eval_data/runs
+  prediction_output_root: outputs/predictions
 
 task:
   name: recognition
