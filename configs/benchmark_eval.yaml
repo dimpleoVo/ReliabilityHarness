@@ -2,7 +2,7 @@ version: "2.0"
 mode: benchmark
 
 project:
-  name: EvalForge
+  name: ReliabilityHarness
   run_name: demo_benchmark
   output_dir: outputs
   prediction_output_root: eval_data/runs
