@@ -332,15 +332,29 @@ def build_reliability_report(
     failure_taxonomy: dict | None = None,
 ):
     attempts = len(trajectory_all)
-    first_eval = trajectory_all[0]["eval"] if trajectory_all else {}
+    first_entry = trajectory_all[0] if trajectory_all else {}
+    first_eval = first_entry.get("eval") or {}
     last_traj = trajectory_all[-1]["traj"] if trajectory_all else {}
     last_steps = last_traj.get("steps", [])
+
+    # Derive initially_failed from stored step_success or from is_eval_success fallback
+    first_step_success = first_entry.get("step_success")
+    if first_step_success is not None:
+        initially_failed = not first_step_success
+    else:
+        initially_failed = not is_eval_success(first_eval)
+
+    recovery_success = bool(initially_failed and retry_triggered and success)
 
     tpr = tool_process_reliability or {}
     ftax = failure_taxonomy or {}
     report = {
         "task": task,
-        "success": success,
+        "success": success,  # compat
+        "final_success": success,
+        "task_success": success,
+        "initially_failed": initially_failed,
+        "recovery_success": recovery_success,
         "attempts": attempts,
         "final_score": final_eval.get("score"),
         "error_type": failure_type,
@@ -351,6 +365,8 @@ def build_reliability_report(
         "trajectory_steps": len(last_steps),
         "score_before": first_eval.get("score") if attempts > 1 else None,
         "score_after": final_eval.get("score") if attempts > 1 else None,
+        "score_metric": "edit_distance",
+        "score_metric_direction": "lower_is_better",
         "tool_process_reliability_score": tpr.get("process_reliability_score"),
         "tool_process_unreliable_steps": tpr.get("unreliable_steps", 0),
         "tool_process_issue_count": len(tpr.get("issues") or []),
@@ -431,20 +447,21 @@ def run_closed_loop(task):
         print("\n[Eval Result]")
         print(eval_result)
 
+        step_success = is_eval_success(eval_result)
+        is_first_step = (step == 1)
+
         trajectory_all.append({
             "step": step,
             "input": current_input,
             "traj": traj_dict,
-            "eval": eval_result
+            "eval": eval_result,
+            "step_success": step_success,
         })
 
         final_answer = traj_dict.get("final_answer")
         coding_metrics = compute_coding_execution_metrics(traj_dict, expected_output=expected_output)
         tool_process_reliability = check_tool_process_reliability(traj_dict)
         failure_taxonomy = classify_runtime_failure(traj_dict, eval_result)
-
-        step_success = is_eval_success(eval_result)
-        is_first_step = (step == 1)
 
         add_reliability_event(
             reliability_events, "eval", "eval_completed",
@@ -504,6 +521,14 @@ def run_closed_loop(task):
     success = is_eval_success(final_eval)
     retry_triggered = len(trajectory_all) > 1
 
+    first_entry_loop = trajectory_all[0] if trajectory_all else {}
+    first_step_success_loop = first_entry_loop.get("step_success")
+    if first_step_success_loop is not None:
+        initially_failed = not first_step_success_loop
+    else:
+        initially_failed = not is_eval_success(first_entry_loop.get("eval") or {})
+    recovery_success = bool(initially_failed and retry_triggered and success)
+
     if final_eval.get("runtime_error"):
         failure_type = "runtime_error"
     elif not success:
@@ -545,7 +570,11 @@ def run_closed_loop(task):
         "trajectory": trajectory_all,
         "final_answer": final_answer,
         "total_steps": len(trajectory_all),
-        "success": success,
+        "success": success,  # compat
+        "final_success": success,
+        "task_success": success,
+        "initially_failed": initially_failed,
+        "recovery_success": recovery_success,
         "reliability_status": "pass" if success else "fail",
         "retry_triggered": retry_triggered,
         "failure_type": failure_type,

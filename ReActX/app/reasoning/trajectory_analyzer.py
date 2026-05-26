@@ -27,6 +27,10 @@ def _text(value):
 
 
 def _is_success(attempt):
+    # Prefer explicit final_success field (avoids score-direction ambiguity)
+    if "final_success" in attempt:
+        return bool(attempt["final_success"])
+    # Legacy fallback: score > 0 assumes higher-is-better normalized score
     return (
         not _as_bool(attempt.get("runtime_error"))
         and not _as_bool(attempt.get("timeout"))

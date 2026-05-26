@@ -58,6 +58,9 @@ def compute_metrics(artifacts: list[dict]) -> dict:
         "memory_usage_rate": 0.0,
         "retry_trigger_rate": 0.0,
         "recovery_rate": 0.0,
+        "recovery_rate_over_all_tasks": 0.0,
+        "recovery_rate_over_failed_first_attempts": 0.0,
+        "recovery_rate_over_retried_tasks": 0.0,
         "failure_type_distribution": {
             "runtime_error": 0,
             "semantic_error": 0,
@@ -70,15 +73,28 @@ def compute_metrics(artifacts: list[dict]) -> dict:
 
     total = len(artifacts)
 
+    def _artifact_success(r):
+        # Prefer final_success; fall back to success for older artifacts
+        if "final_success" in r:
+            return bool(r["final_success"])
+        return bool(r.get("success", False))
+
     # ── per-run counters ──────────────────────────────────────────────────
-    successes      = sum(1 for r in artifacts if r.get("success", False))
+    successes      = sum(1 for r in artifacts if _artifact_success(r))
     memory_used    = sum(1 for r in artifacts if r.get("memory_used", False))
     retried        = sum(1 for r in artifacts if (r.get("num_attempts") or 1) > 1)
     recovered      = sum(
         1 for r in artifacts
-        if (r.get("num_attempts") or 1) > 1 and r.get("success", False)
+        if (r.get("num_attempts") or 1) > 1 and _artifact_success(r)
     )
     attempts_counts = [(r.get("num_attempts") or 1) for r in artifacts]
+
+    # ── initially-failed counters (uses artifact field from closed_loop_runner) ──
+    initially_failed_count = sum(1 for r in artifacts if r.get("initially_failed", False))
+    recovered_from_initial_failure = sum(
+        1 for r in artifacts
+        if r.get("initially_failed", False) and _artifact_success(r)
+    )
 
     # ── per-attempt counters ──────────────────────────────────────────────
     all_attempts: list[dict] = [
@@ -105,7 +121,7 @@ def compute_metrics(artifacts: list[dict]) -> dict:
 
     for r in artifacts:
         run_attempts = r.get("attempts") or []
-        run_success  = r.get("success", False)
+        run_success  = _artifact_success(r)
 
         for i, attempt in enumerate(run_attempts):
             if not isinstance(attempt, dict):
@@ -124,14 +140,20 @@ def compute_metrics(artifacts: list[dict]) -> dict:
             # else: successful attempt — not a failure, skip
 
     return {
-        "total_runs":              total,
-        "success_rate":            round(successes / total, 4),
-        "avg_attempts":            round(mean(attempts_counts), 4),
-        "runtime_error_rate":      runtime_error_rate,
-        "timeout_rate":            timeout_rate,
-        "memory_usage_rate":       round(memory_used / total, 4),
-        "retry_trigger_rate":      round(retried / total, 4),
-        "recovery_rate":           round(recovered / total, 4),
+        "total_runs":                              total,
+        "success_rate":                            round(successes / total, 4),
+        "avg_attempts":                            round(mean(attempts_counts), 4),
+        "runtime_error_rate":                      runtime_error_rate,
+        "timeout_rate":                            timeout_rate,
+        "memory_usage_rate":                       round(memory_used / total, 4),
+        "retry_trigger_rate":                      round(retried / total, 4),
+        "recovery_rate":                            round(recovered / total, 4),  # compat
+        "recovery_rate_over_all_tasks":             round(recovered / total, 4),
+        "recovery_rate_over_failed_first_attempts": (
+            round(recovered_from_initial_failure / initially_failed_count, 4)
+            if initially_failed_count > 0 else 0.0
+        ),
+        "recovery_rate_over_retried_tasks":         round(recovered / retried, 4) if retried > 0 else 0.0,
         "failure_type_distribution": dict(dist),
     }
 

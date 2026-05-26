@@ -20,6 +20,10 @@ class Evaluator:
         if gt is None:
             return {
                 "score": None,
+                "score_semantics": "no_gt",
+                "primary_metric_name": None,
+                "primary_metric_direction": None,
+                "auxiliary_metrics": {},
                 "metrics": {},
                 "num_steps": meta.get("num_steps"),
                 "runtime_error": runtime_error,
@@ -34,11 +38,15 @@ class Evaluator:
             except Exception:
                 results[name] = None
 
-        # 默认主分数用 edit_distance
+        # 默认主分数用 edit_distance (lower_is_better; 0=perfect match)
         main_score = results.get("edit_distance")
 
         return {
-            "score": main_score,
+            "score": main_score,  # compat field: value is edit_distance (lower_is_better)
+            "score_semantics": "legacy_edit_distance_lower_is_better",
+            "primary_metric_name": "edit_distance",
+            "primary_metric_direction": "lower_is_better",
+            "auxiliary_metrics": results,
             "metrics": results,
             "num_steps": meta.get("num_steps"),
             "runtime_error": runtime_error,
