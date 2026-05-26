@@ -12,9 +12,15 @@ REPO_ROOT: Path = PACKAGE_ROOT.parent
 CONFIGS_ROOT: Path = REPO_ROOT / "configs"
 DOCS_ROOT: Path = REPO_ROOT / "docs"
 SCRIPTS_ROOT: Path = REPO_ROOT / "scripts"
-ARTIFACTS_ROOT: Path = REPO_ROOT / "outputs" / "artifacts"
-REPORTS_ROOT: Path = REPO_ROOT / "outputs" / "reports"
+OUTPUTS_ROOT: Path = REPO_ROOT / "outputs"
+ARTIFACTS_ROOT: Path = OUTPUTS_ROOT / "artifacts"
+REPORTS_ROOT: Path = OUTPUTS_ROOT / "reports"
 LEGACY_REACTX_ROOT: Path = REPO_ROOT / "ReActX"
+
+# Runtime data roots (canonical locations after full migration)
+DATA_ROOT: Path = REPO_ROOT / "data"
+RUNS_ROOT: Path = REPO_ROOT / "runs"
+CHROMA_DB_ROOT: Path = DATA_ROOT / "chroma_db_data"
 
 
 def repo_path(*parts: str) -> Path:
@@ -35,6 +41,22 @@ def artifact_path(*parts: str) -> Path:
 
 def report_path(*parts: str) -> Path:
     return REPORTS_ROOT.joinpath(*parts)
+
+
+def data_path(*parts: str) -> Path:
+    return DATA_ROOT.joinpath(*parts)
+
+
+def runs_path(*parts: str) -> Path:
+    return RUNS_ROOT.joinpath(*parts)
+
+
+def chroma_path(*parts: str) -> Path:
+    return CHROMA_DB_ROOT.joinpath(*parts)
+
+
+def outputs_path(*parts: str) -> Path:
+    return OUTPUTS_ROOT.joinpath(*parts)
 
 
 def resolve_path(path: str, base: str = "repo") -> Path:

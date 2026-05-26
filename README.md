@@ -67,12 +67,37 @@ bash scripts/run_benchmark_mock.sh
 
 ## Docker
 
+All Docker configuration lives under `docker/` at repo root.
+Do **not** use `ReActX/infra/docker/` — that is the legacy location.
+
+**Static validation** (no `.env` required):
+
+```bash
+docker compose -f docker/docker-compose.yml config
+```
+
+**To run with real LLM / API calls**, create a `.env` at repo root first:
+
+```bash
+cp .env.example .env
+# edit .env — set OPENAI_API_KEY and any other required values
+```
+
+**Start services:**
+
 ```bash
 docker compose -f docker/docker-compose.yml up
 ```
 
 Backend: `http://localhost:8000`
 Sandbox: `http://localhost:9000`
+
+Notes:
+- `.env` at repo root is **optional** for static config validation; required for real API calls.
+- `docker/backend.Dockerfile` uses `requirements.txt` at repo root.
+- `docker/sandbox.Dockerfile` uses `docker/sandbox.requirements.txt`.
+- Chroma data is mounted from `chroma_db/` at repo root into the container at `/app/data/chroma_db_data`.
+- `docker/docker-compose.yml` reads `.env` from repo root (`../.env` relative to the compose file); if the file is absent, Docker Compose proceeds without it.
 
 ---
 

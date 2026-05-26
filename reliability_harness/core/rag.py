@@ -3,6 +3,8 @@ from chromadb.utils import embedding_functions
 import uuid
 import logging
 
+from reliability_harness.utils.paths import CHROMA_DB_ROOT
+
 # 1. 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,8 +15,8 @@ class RAG_Engine:
         """
         初始化向量数据库
         """
-        # 持久化存储路径 (生产环境会挂载到 Docker Volume)
-        self.client = chromadb.PersistentClient(path="./chroma_db_data")
+        # Persistent storage path — resolved from repo root, independent of cwd
+        self.client = chromadb.PersistentClient(path=str(CHROMA_DB_ROOT))
 
         # 使用默认的 Embedding 模型 (all-MiniLM-L6-v2)
         # 如果是生产环境，这里会换成 OpenAIEmbeddingFunction

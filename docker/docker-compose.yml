@@ -5,7 +5,8 @@ services:
       dockerfile: docker/backend.Dockerfile
     container_name: reliability-backend
     env_file:
-      - ../.env
+      - path: ../.env
+        required: false
     environment:
       - PYTHONPATH=/app
       - SANDBOX_BASE_URL=http://sandbox:9000
@@ -18,8 +19,9 @@ services:
     volumes:
       - ../:/app
       - /var/run/docker.sock:/var/run/docker.sock
-      # chroma_db_data: still in ReActX/ for this migration phase; move to data/ in a future pass
-      - ../chroma_db:/app/ReActX/chroma_db_data
+      # chroma_db_data: host chroma_db/ at repo root → /app/data/chroma_db_data in container
+      # Migration-2B will move host path from chroma_db/ to data/chroma_db_data/
+      - ../chroma_db:/app/data/chroma_db_data
     command: uvicorn reliability_harness.runtime.main_api:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - sandbox
