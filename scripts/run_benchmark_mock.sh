@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Transitional legacy mock script. New paper benchmarks use:
+#   python -m reliability_harness.experiments.run_benchmark --benchmark <name> --dry-run
+# This script invokes run_eval.py (EvalForge-era); do not use for paper results.
 # Run a mock benchmark eval (no real LLM, no real sandbox).
 # Works from any cwd.
 set -euo pipefail

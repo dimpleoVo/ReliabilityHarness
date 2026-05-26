@@ -1,10 +1,13 @@
-"""Minimal CLI for ReliabilityHarness package info and path inspection.
+"""ReliabilityHarness package CLI.
 
 Usage:
     python -m reliability_harness.cli info
     python -m reliability_harness.cli paths
+    python -m reliability_harness.cli benchmark --benchmark mbpp --dry-run
+    python -m reliability_harness.cli benchmark --benchmark humaneval --dry-run
 """
 import argparse
+import json
 import sys
 
 from reliability_harness.utils.paths import (
@@ -54,6 +57,14 @@ def cmd_paths(_args: argparse.Namespace) -> None:
         print(f"{k}: {v}")
 
 
+def cmd_benchmark(args: argparse.Namespace) -> None:
+    from reliability_harness.experiments.run_benchmark import run
+    from reliability_harness.benchmarks.registry import list_benchmarks
+
+    result = run(benchmark=args.benchmark, dry_run_mode=args.dry_run)
+    print(json.dumps(result, indent=2))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="python -m reliability_harness.cli",
@@ -63,12 +74,30 @@ def main() -> None:
     sub.add_parser("info", help="Show package layer info")
     sub.add_parser("paths", help="Show resolved filesystem paths")
 
+    from reliability_harness.benchmarks.registry import list_benchmarks
+    bm = sub.add_parser("benchmark", help="Run benchmark dry-run skeleton")
+    bm.add_argument(
+        "--benchmark",
+        required=True,
+        choices=list_benchmarks(),
+        metavar="BENCHMARK",
+        help=f"Benchmark name. Supported: {', '.join(list_benchmarks())}",
+    )
+    bm.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=False,
+        help="Print pipeline skeleton without loading data or running experiments",
+    )
+
     args = parser.parse_args()
 
     if args.command == "info":
         cmd_info(args)
     elif args.command == "paths":
         cmd_paths(args)
+    elif args.command == "benchmark":
+        cmd_benchmark(args)
     else:
         parser.print_help()
         sys.exit(1)

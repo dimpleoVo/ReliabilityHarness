@@ -58,10 +58,54 @@ python -m reliability_harness.cli paths
 
 # Run tests
 bash scripts/run_tests.sh
-
-# Run mock benchmark
-bash scripts/run_benchmark_mock.sh
 ```
+
+---
+
+## Benchmark Entrypoint
+
+The sole authoritative entrypoint for ReliabilityHarness paper experiments is:
+
+```bash
+python -m reliability_harness.experiments.run_benchmark --benchmark <name> [--dry-run]
+```
+
+Supported benchmarks: `mbpp`, `humaneval`
+
+**Dry-run** (validate pipeline skeleton — no data loading, no LLM calls, no output writes):
+
+```bash
+python -m reliability_harness.experiments.run_benchmark --benchmark mbpp --dry-run
+python -m reliability_harness.experiments.run_benchmark --benchmark humaneval --dry-run
+```
+
+**Full run** (coming next phase — drop `--dry-run` once adapters are implemented):
+
+```bash
+python -m reliability_harness.experiments.run_benchmark --benchmark mbpp
+python -m reliability_harness.experiments.run_benchmark --benchmark humaneval
+```
+
+Also accessible from the unified CLI:
+
+```bash
+python -m reliability_harness.cli benchmark --benchmark mbpp --dry-run
+```
+
+### Deprecated entry points (not for paper results)
+
+| Script / Entry | Reason |
+|---|---|
+| `ReActX/benchmark_reliability.py` | EvalForge-era; not connected to ReliabilityHarness evaluation pipeline |
+| `ReActX/evaluate.py` | Legacy EvalForge runner |
+| `run_eval.py` | EvalForge-style; outputs not canonical for paper |
+| `scripts/run_benchmark_mock.sh` | Calls run_eval.py (EvalForge-era); use `--dry-run` instead |
+| `ReActX/test_*.py` | Temporary migration smoke tests; not constraints on new architecture |
+| `ReActX/benchmark_results/` | Historical data; not paper results |
+| `ReActX/runs/` | Historical data; not paper results |
+| `ReActX/reports/` | Historical data; not paper results |
+
+See [docs/BENCHMARK_ENTRYPOINT.md](docs/BENCHMARK_ENTRYPOINT.md) for full reference.
 
 ---
 

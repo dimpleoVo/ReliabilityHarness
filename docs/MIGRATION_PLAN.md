@@ -101,6 +101,50 @@
 
 ---
 
+## Benchmark-0: Benchmark adapter skeleton and experiment entrypoint (completed)
+
+**Branch:** `migration/reliability-harness-structure`
+
+### What Benchmark-0 completes
+
+1. Creates `reliability_harness/benchmarks/task_schema.py`: `BenchmarkTask` dataclass — canonical schema between adapter layer and runtime/evaluation layers.
+2. Creates `reliability_harness/benchmarks/adapters/base.py`: `BenchmarkAdapter` ABC with abstract `load_tasks()` and `normalize()` methods.
+3. Creates `reliability_harness/benchmarks/adapters/mbpp.py`: `MBPPAdapter` stub with documented field mapping; raises `NotImplementedError` until data loading is implemented.
+4. Creates `reliability_harness/benchmarks/adapters/humaneval.py`: `HumanEvalAdapter` stub with documented field mapping; raises `NotImplementedError` until data loading is implemented.
+5. Creates `reliability_harness/benchmarks/registry.py`: `get_adapter()` and `list_benchmarks()` dispatch; `_REGISTRY` maps benchmark name → adapter class.
+6. Creates `reliability_harness/experiments/run_benchmark.py`: sole authoritative entrypoint for paper benchmark runs; supports `--benchmark` and `--dry-run`; `dry_run()` returns structured pipeline manifest without loading data; `run()` raises `NotImplementedError` for full execution until adapters are complete.
+7. Updates `reliability_harness/cli.py`: adds `benchmark` subcommand (`--benchmark`, `--dry-run`) that delegates to `run_benchmark.run()`.
+8. Adds legacy comment header to `run_eval.py` marking it as EvalForge-era; not for paper results.
+9. Adds legacy comment header to `scripts/run_benchmark_mock.sh` marking it as transitional.
+10. Creates `docs/BENCHMARK_ENTRYPOINT.md`: full reference for paper benchmark entrypoint, pipeline steps, path policy, deprecated scripts, and adapter extension guide.
+11. Updates `README.md`: adds "Benchmark Entrypoint" section documenting authoritative entrypoint, dry-run and full-run usage, deprecated entry points table.
+12. Updates `docs/ARCHITECTURE.md`: adds Layer 8 (Benchmarks layer) documenting `reliability_harness.benchmarks` and `reliability_harness.experiments`.
+
+### New data and output paths
+
+| Purpose | Path |
+|---|---|
+| Task fixtures | `data/tasks/` |
+| Experiment fixtures | `data/fixtures/` |
+| Run artifacts | `outputs/runs/` |
+| Reliability reports | `outputs/reports/` |
+| Benchmark summaries | `outputs/benchmark_results/` |
+
+All paths resolved via `reliability_harness.utils.paths` — no `os.getcwd()` dependency.
+
+### What Benchmark-0 does NOT change
+
+- No evaluation semantics, agent logic, retry/reflection/memory behavior.
+- No business logic in any existing module.
+- `MBPPAdapter.load_tasks()` and `HumanEvalAdapter.load_tasks()` both raise `NotImplementedError` — no data loading implemented.
+- Full execution (`run()` without `--dry-run`) raises `NotImplementedError` — not yet implemented.
+- `ReActX/benchmark_results/`, `ReActX/runs/`, `ReActX/reports/` not moved (historical data, not paper results).
+- `ReActX/app/`, `ReActX/evalforge/`, `app/`, `evalforge/` not deleted.
+- `ReActX/test_*.py` not migrated.
+- No SWE-bench support (roadmap: MBPP → HumanEval → LiveCodeBench → SWE-bench Lite).
+
+---
+
 ## Migration-2B-2: Physical data migration (next)
 
 Planned scope:

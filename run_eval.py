@@ -1,3 +1,5 @@
+# Legacy EvalForge-style runner. Do not use for new ReliabilityHarness paper benchmarks.
+# Paper benchmarks use: python -m reliability_harness.experiments.run_benchmark --benchmark <name> --dry-run
 import argparse
 
 from reliability_harness.evaluation.utils import load_yaml

@@ -112,6 +112,32 @@ Submodules:
 
 ---
 
+## Layer 8: Benchmarks Layer
+
+**Package:** `reliability_harness.benchmarks`, `reliability_harness.experiments`
+
+Adapter-based benchmark integration and experiment runner for paper evaluations.
+
+Submodules:
+- `benchmarks.task_schema` — `BenchmarkTask` dataclass (canonical schema between adapter and runtime)
+- `benchmarks.adapters.base` — `BenchmarkAdapter` ABC (`load_tasks()`, `normalize()`)
+- `benchmarks.adapters.mbpp` — MBPP adapter (stub; full implementation in next phase)
+- `benchmarks.adapters.humaneval` — HumanEval adapter (stub; full implementation in next phase)
+- `benchmarks.registry` — `get_adapter()` and `list_benchmarks()` dispatch
+- `experiments.run_benchmark` — sole authoritative entrypoint for paper benchmark runs
+
+**Paper entrypoint:**
+
+```bash
+python -m reliability_harness.experiments.run_benchmark --benchmark <name> [--dry-run]
+```
+
+Supported benchmarks: `mbpp`, `humaneval`
+
+**Benchmark roadmap:** MBPP → HumanEval → LiveCodeBench → SWE-bench Lite
+
+---
+
 ## Compatibility Namespaces
 
 The following are **shim-only** namespaces at repo root. They redirect imports to `reliability_harness.*` and must not be used as primary entry points in new code.
