@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# LEGACY / TRANSITIONAL — NOT the paper benchmark entrypoint.
+# LEGACY — NOT the paper benchmark entrypoint.
+# Legacy mock benchmark runner. Not part of official ReliabilityHarness paper benchmark path.
 # This script invokes run_eval.py (EvalForge-era); do not use for paper results.
 #
-# New paper benchmark entrypoint:
+# Official paper benchmark entrypoint:
 #   bash scripts/run_benchmark_dry_run.sh mbpp
 #   python -m reliability_harness.experiments.run_benchmark --benchmark mbpp --dry-run
 #
@@ -12,7 +13,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 export PYTHONPATH="$REPO_ROOT:$REPO_ROOT/ReActX"
 export BENCHMARK_MOCK=1

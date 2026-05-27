@@ -107,7 +107,7 @@ python -m reliability_harness.cli benchmark --benchmark mbpp --dry-run
 | `ReActX/benchmark_reliability.py` | **Deprecated** | EvalForge-era; not connected to ReliabilityHarness pipeline |
 | `ReActX/evaluate.py` | **Deprecated** | Legacy EvalForge runner |
 | `run_eval.py` | **Legacy** | EvalForge-style; outputs not canonical for paper |
-| `scripts/run_benchmark_mock.sh` | **Legacy** | Calls run_eval.py (EvalForge-era); use `run_benchmark_dry_run.sh` instead |
+| `scripts/legacy/run_benchmark_mock.sh` | **Legacy** | Calls run_eval.py (EvalForge-era); use `run_benchmark_dry_run.sh` instead |
 | `ReActX/test_*.py` | **Legacy smoke tests** | Not constraints on new architecture; root `tests/` supersedes these. Manual legacy runs via `scripts/legacy/run_reactx_tests.sh` |
 | `ReActX/benchmark_results/` | **Historical data** | Not paper results; not to be cited |
 | `ReActX/runs/` | **Historical data** | Not paper results |

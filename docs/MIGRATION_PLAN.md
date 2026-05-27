@@ -196,6 +196,30 @@ All paths resolved via `reliability_harness.utils.paths` — no `os.getcwd()` de
 
 ---
 
+## Migration-4D: Move legacy mock script and clean root test placeholders (completed)
+
+**Branch:** `migration/reliability-harness-structure`
+
+### What Migration-4D completes
+
+1. Moves `scripts/run_benchmark_mock.sh` → `scripts/legacy/run_benchmark_mock.sh` via `git mv`. Fixes `REPO_ROOT` path calculation for new depth. Updates legacy header to state "Legacy mock benchmark runner. Not part of official ReliabilityHarness paper benchmark path."
+2. Deletes 4 zero-byte legacy placeholder test files: `tests/test_agent.py`, `tests/test_closed_loop.py`, `tests/test_evalforge.py`, `tests/test_tools.py`. These contained no code and had no test value.
+3. Updates `README.md` deprecated table: `scripts/run_benchmark_mock.sh` → `scripts/legacy/run_benchmark_mock.sh`.
+4. Updates `docs/BENCHMARK_ENTRYPOINT.md` deprecated table: path updated to match new location.
+5. Updates `docs/ARCHITECTURE.md`: adds "Scripts" section documenting official vs legacy scripts layout; updates migration status table.
+
+### What Migration-4D does NOT change
+
+- No evaluation semantics, agent logic, retry/reflection/memory behavior.
+- No business logic in any module.
+- `ReActX/` directory, `ReActX/test_*.py`, `ReActX/run_tests.py` — not deleted, not moved.
+- `app/` and `evalforge/` shims — not deleted.
+- Authoritative benchmark tests (`tests/test_benchmark_*.py`) — not touched.
+- No MBPP/HumanEval data loading.
+- No git add / commit / push.
+
+---
+
 ## Migration-2B-2: Physical data migration (next)
 
 Planned scope:

@@ -147,7 +147,8 @@ Supported benchmarks: `mbpp`, `humaneval`
 | Migration-2B-1: Unified data/output paths | Completed |
 | Benchmark-0: Benchmark adapter skeleton + experiment entrypoint | Completed |
 | Migration-4A/B: Official entrypoint cleanup + root tests | Completed |
-| **Migration-4C: Split official tests from legacy ReActX tests** | **Completed** |
+| Migration-4C: Split official tests from legacy ReActX tests | Completed |
+| **Migration-4D: Move legacy mock script + remove 0-byte placeholders** | **Completed** |
 | Migration-2B-2: Physical data migration | Planned |
 | Migration-3: Test migration and legacy cleanup | Planned |
 | Migration-4 (full): MBPP/HumanEval adapter implementation | Planned |
@@ -183,6 +184,25 @@ All root tests import only `reliability_harness.*`. No LLM calls, no Docker, no 
 - NOT part of the paper benchmark path.
 - NOT constraints on `reliability_harness.*` architecture.
 - Preserved for historical reference; will be retired in Migration-3.
+
+---
+
+## Scripts
+
+**Official scripts** (`scripts/`):
+
+| Script | Purpose |
+|---|---|
+| `scripts/run_tests.sh` | Run authoritative root-level tests (no ReActX) |
+| `scripts/run_benchmark_dry_run.sh` | Official dry-run benchmark entrypoint (no LLM/Docker/data) |
+| `scripts/run_paths.sh` | Print resolved repo paths |
+
+**Legacy scripts** (`scripts/legacy/`):
+
+| Script | Purpose |
+|---|---|
+| `scripts/legacy/run_reactx_tests.sh` | Manual legacy runner for `ReActX/test_*.py` — not part of paper path |
+| `scripts/legacy/run_benchmark_mock.sh` | Legacy EvalForge-era mock benchmark runner via `run_eval.py` — not for paper results |
 
 ---
 
