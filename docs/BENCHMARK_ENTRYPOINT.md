@@ -28,6 +28,44 @@ Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
 ---
 
+## Benchmark-4B: Docker Execution Runner
+
+**Status:** Benchmark-4B.1 implemented (Docker runner schema adapter, mock backend tests only).
+
+**Scope:** `execute_in_docker()` + `DockerExecutionBackend` protocol + `DockerBackendResult`.  
+**Not in scope:** `run_benchmark --execute-docker` CLI flag, retry, memory, process metrics.
+
+| Component | File | Status |
+|---|---|---|
+| Docker runner | `reliability_harness/runtime/execution/docker_runner.py` | Done |
+| Unit tests (mock backend) | `tests/test_docker_execution_runner.py` | Done |
+| Integration tests (real Docker) | `tests/test_docker_execution_runner_integration.py` | Optional / `@pytest.mark.docker` |
+
+**Benchmark-4B.1 boundaries:**
+- Default `scripts/run_tests.sh` uses a **fake backend** — no Docker daemon required.
+- Real Docker smoke test exists at `tests/test_docker_execution_runner_integration.py` (marked `@pytest.mark.docker`, excluded from default run).
+- `run_benchmark.py` and `cli.py` are **unchanged** — no `--execute-docker` flag yet.
+- No retry, no memory, no process reliability metrics in this phase.
+- Docker `python:3.11-slim` image, `--network none`, 128 MB memory limit, 0.5 CPU cap.
+
+**Error type mapping:**
+
+| Condition | `error_type` |
+|---|---|
+| `exit_code == 0` | `null` |
+| `stderr` contains `AssertionError` | `assertion_failure` |
+| `stderr` contains `SyntaxError` | `syntax_error` |
+| `timed_out == True` | `timeout` |
+| Other non-zero exit | `runtime_error` |
+| Backend raises exception | `infrastructure_error` |
+
+**Run integration tests manually:**
+```bash
+pytest -m docker tests/test_docker_execution_runner_integration.py -v
+```
+
+---
+
 ## Benchmark-4A: Execution Contract and Local Deterministic Runner
 
 **Status:** Benchmark-4A.1 implemented (local deterministic execution contract only).
