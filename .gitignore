@@ -120,6 +120,9 @@ __pycache__/
 !outputs/predictions/
 !outputs/predictions/.gitkeep
 outputs/predictions/*/
+!outputs/executions/
+!outputs/executions/.gitkeep
+outputs/executions/*/
 !outputs/benchmark_results/
 !outputs/benchmark_results/.gitkeep
 outputs/benchmark_results/*.json

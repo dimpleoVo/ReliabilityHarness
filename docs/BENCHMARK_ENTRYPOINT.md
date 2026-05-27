@@ -28,6 +28,59 @@ Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
 ---
 
+## Benchmark-4A: Execution Contract and Local Deterministic Runner
+
+**Status:** Benchmark-4A.1 implemented (local deterministic execution contract only).
+
+**Scope:** `ExecutionInput` / `ExecutionResult` contract + `execute_locally()` runner.  
+**Not in scope:** Docker, real LLM-generated artifact execution, retry, memory, process metrics.
+
+| Component | File | Status |
+|---|---|---|
+| Contract | `reliability_harness/runtime/execution/contract.py` | Done |
+| Local runner | `reliability_harness/runtime/execution/local_runner.py` | Done |
+| Execution artifact | `reliability_harness/artifacts/execution_artifact.py` | Done |
+
+**Benchmark-4A.1 boundaries:**
+- `execute_locally()` runs trusted fixture code only. It is NOT safe for untrusted agent-generated code.
+- Docker-isolated execution for agent-generated code is **Benchmark-4B** (not yet implemented).
+- No retry, no memory, no process reliability metrics in this phase.
+- No CLI integration in this phase (`run_benchmark.py` and `cli.py` are unchanged).
+
+**Outputs** are written to:
+```
+outputs/executions/{run_id}/{run_id}_{task_id}.json
+```
+
+**Execution artifact schema:**
+```json
+{
+  "artifact_version": "4A.1",
+  "created_at": "...",
+  "run_id": "...",
+  "benchmark": "mbpp",
+  "task_id": "mbpp_1",
+  "candidate_code": "def add(a, b): return a + b",
+  "tests": ["assert add(1, 2) == 3"],
+  "source_generation_artifact": null,
+  "result": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "timed_out": false,
+    "tests_passed": true,
+    "error_type": null,
+    "execution_time_ms": 12,
+    "docker_used": false,
+    "execution_performed": true
+  }
+}
+```
+
+**`error_type` values:** `null` (pass), `assertion_failure`, `syntax_error`, `runtime_error`, `timeout`, `infrastructure_error`, `unknown`.
+
+---
+
 ## Benchmark-3: Generation-Only LLM Candidate Generation
 
 Benchmark-3 adds LLM candidate generation on top of the Benchmark-2 data-loading layer.

@@ -29,4 +29,7 @@ python -m pytest \
   tests/test_generation_code_extractor.py \
   tests/test_generation_artifact.py \
   tests/test_generation_mode.py \
+  tests/test_execution_contract.py \
+  tests/test_local_execution_runner.py \
+  tests/test_execution_artifact.py \
   -v
