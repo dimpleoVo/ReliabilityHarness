@@ -38,14 +38,12 @@ class Evaluator:
             except Exception:
                 results[name] = None
 
-        # 默认主分数用 edit_distance (lower_is_better; 0=perfect match)
-        main_score = results.get("edit_distance")
-
         return {
-            "score": main_score,  # compat field: value is edit_distance (lower_is_better)
-            "score_semantics": "legacy_edit_distance_lower_is_better",
-            "primary_metric_name": "edit_distance",
-            "primary_metric_direction": "lower_is_better",
+            "score": None,
+            "score_semantics": "not_evaluated",
+            "primary_metric_name": None,
+            "primary_metric_direction": None,
+            "final_success": None,
             "auxiliary_metrics": results,
             "metrics": results,
             "num_steps": meta.get("num_steps"),

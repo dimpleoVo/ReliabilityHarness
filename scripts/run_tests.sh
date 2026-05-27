@@ -21,4 +21,5 @@ python -m pytest \
   tests/test_benchmark_entrypoint.py \
   tests/test_benchmark_registry.py \
   tests/test_benchmark_task_schema.py \
+  tests/test_edit_distance_not_success_gate.py \
   -v

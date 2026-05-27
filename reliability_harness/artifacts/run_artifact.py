@@ -9,7 +9,7 @@ from reliability_harness.utils.paths import RUNS_ROOT
 _DEFAULT_RUNS_DIR = RUNS_ROOT
 
 
-def _derive_final_success(entry: dict, runtime_error: bool, score, eval_result: dict) -> bool:
+def _derive_final_success(entry: dict, runtime_error: bool, score, eval_result: dict) -> bool | None:
     # Prefer explicit step_success stored by closed_loop_runner
     step_success_explicit = entry.get("step_success")
     if step_success_explicit is not None:
@@ -28,12 +28,14 @@ def _derive_final_success(entry: dict, runtime_error: bool, score, eval_result: 
     if llm_judge_score is not None:
         return float(llm_judge_score) >= 0.8
 
-    ed = metrics.get("edit_distance")
-    if ed is not None:
-        return float(ed) <= 0.05  # same threshold as is_eval_success in closed_loop_runner
+    # Explicit outcome fields from eval_result (future extensibility)
+    for field in ("final_success", "task_success", "test_passed", "tests_passed", "success"):
+        val = eval_result.get(field)
+        if val is not None:
+            return bool(val)
 
-    # conservative fallback: only exact 0 score (LLM judge correct path uses score=0)
-    return score is not None and score == 0
+    # No explicit success signal: return None (unknown, not derived from edit_distance)
+    return None
 
 
 def _extract_attempt(entry: dict) -> dict:
@@ -150,7 +152,7 @@ def save_run_artifact(result: dict, task: str, runs_dir: str | None = None) -> s
             "recovery_success": recovery_success,
             "num_attempts": result.get("total_steps", len(trajectory_all)),
             "final_score": reliability_report.get("final_score"),  # compat
-            "score_semantics": "legacy_edit_distance_lower_is_better",
+            "score_semantics": "legacy_compat",
             "primary_metric_name": "final_success",
             "primary_metric_direction": "boolean",
             "primary_success_field": "final_success",

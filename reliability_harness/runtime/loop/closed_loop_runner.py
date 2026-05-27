@@ -6,6 +6,7 @@ from reliability_harness.runtime.loop.tool_process_reliability import check_tool
 from reliability_harness.runtime.loop.failure_taxonomy import classify_runtime_failure
 from reliability_harness.runtime.tools.code_executor import CodeExecutionTool
 from reliability_harness.runtime.loop.eval_adapter import trajectory_to_eval_sample
+from reliability_harness.runtime.loop.success_gate import is_eval_success, is_improved
 from reliability_harness.utils.dataset_loader import get_ground_truth
 from reliability_harness.evaluation.runtime_eval.evaluator import Evaluator
 from reliability_harness.evaluation.runtime_eval.failure_analyzer import FailureAnalyzer
@@ -22,39 +23,6 @@ from reliability_harness.memory.vector_store import FailureMemoryVectorStore
 from reliability_harness.evaluation.runtime_eval.llm_judge import llm_judge
 
 failure_analyzer = FailureAnalyzer()
-
-# edit_distance = 1 - sm.ratio()，越小越好 (0=完全匹配).
-# 只在 GT 路径下读取 metrics["edit_distance"]，不用 score 字段（LLM judge 路径复用了 score）.
-_EDIT_DISTANCE_OK = 0.05
-
-
-def is_eval_success(eval_result: dict) -> bool:
-    """Unified success predicate. Never reads eval_result['score'] directly."""
-    if eval_result.get("runtime_error"):
-        return False
-
-    # LLM judge path: explicit correct flag
-    judge = eval_result.get("judge") or {}
-    if judge.get("correct"):
-        return True
-
-    metrics = eval_result.get("metrics") or {}
-
-    # LLM judge as metric value
-    if metrics.get("llm_judge", 0) >= 0.8:
-        return True
-
-    # GT path: edit_distance is 越小越好; only present when GT was found
-    ed = metrics.get("edit_distance")
-    if ed is not None and ed <= _EDIT_DISTANCE_OK:
-        return True
-
-    return False
-
-
-def is_improved(before_eval: dict, after_eval: dict) -> bool:
-    """True only when first attempt failed AND retry attempt succeeded."""
-    return (not is_eval_success(before_eval)) and is_eval_success(after_eval)
 
 
 # ===============================
@@ -369,8 +337,10 @@ def build_reliability_report(
         "trajectory_steps": len(last_steps),
         "score_before": first_eval.get("score") if attempts > 1 else None,
         "score_after": final_eval.get("score") if attempts > 1 else None,
-        "score_metric": "edit_distance",
-        "score_metric_direction": "lower_is_better",
+        "score_metric": "final_success",
+        "score_metric_direction": "higher_is_better",
+        "legacy_score_metric": "edit_distance",
+        "legacy_score_direction": "lower_is_better",
         "tool_process_reliability_score": tpr.get("process_reliability_score"),
         "tool_process_unreliable_steps": tpr.get("unreliable_steps", 0),
         "tool_process_issue_count": len(tpr.get("issues") or []),
@@ -558,7 +528,7 @@ def run_closed_loop(task):
     retry_effectiveness = compute_retry_effectiveness(
         trajectory_all=trajectory_all,
         reliability_report=reliability_report,
-        metric_name="edit_distance",  # score_before/score_after are edit_distance values (lower_is_better)
+        metric_name="edit_distance",  # auxiliary score metric only; not a success gate
     )
 
     # Recompute with reliability_report so max_retry_exhausted can be detected
