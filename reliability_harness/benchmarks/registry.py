@@ -17,10 +17,12 @@ Design:
 from reliability_harness.benchmarks.adapters.base import BenchmarkAdapter
 from reliability_harness.benchmarks.adapters.humaneval import HumanEvalAdapter
 from reliability_harness.benchmarks.adapters.mbpp import MBPPAdapter
+from reliability_harness.benchmarks.adapters.tiny import TinyFixtureAdapter
 
 _REGISTRY: dict[str, type[BenchmarkAdapter]] = {
-    "mbpp": MBPPAdapter,
     "humaneval": HumanEvalAdapter,
+    "mbpp": MBPPAdapter,
+    "tiny": TinyFixtureAdapter,
 }
 
 

@@ -6,6 +6,9 @@ constraint on the Benchmark-0 pipeline skeleton.
 
 No LLM calls. No Docker. No data loading. No ReActX/app/evalforge imports.
 """
+import json
+import os
+
 import pytest
 
 from reliability_harness.experiments.run_benchmark import dry_run, run
@@ -66,3 +69,58 @@ class TestRunDispatch:
     def test_run_full_humaneval_raises_not_implemented(self):
         with pytest.raises(NotImplementedError):
             run("humaneval", dry_run_mode=False)
+
+
+class TestTinyDryRun:
+    def test_tiny_dry_run_returns_benchmark_name(self):
+        result = dry_run("tiny")
+        assert result["benchmark"] == "tiny"
+
+    def test_tiny_dry_run_returns_adapter_name(self):
+        result = dry_run("tiny")
+        assert result["adapter"] == "TinyFixtureAdapter"
+
+    def test_tiny_dry_run_status(self):
+        result = dry_run("tiny")
+        assert result["status"] == "dry-run skeleton"
+
+    def test_tiny_dry_run_contains_benchmark_results_output(self):
+        result = dry_run("tiny")
+        assert "benchmark_results_output" in result
+
+    def test_tiny_dry_run_contains_dry_run_artifact(self):
+        result = dry_run("tiny")
+        assert "dry_run_artifact" in result
+
+    def test_tiny_dry_run_artifact_path_ends_correctly(self):
+        result = dry_run("tiny")
+        artifact = result["dry_run_artifact"]
+        assert artifact.endswith(
+            os.path.join("benchmark_results", "tiny_dry_run.json")
+        )
+
+    def test_tiny_dry_run_artifact_file_exists(self):
+        result = dry_run("tiny")
+        assert os.path.isfile(result["dry_run_artifact"])
+
+    def test_tiny_dry_run_artifact_json_contains_benchmark(self):
+        result = dry_run("tiny")
+        with open(result["dry_run_artifact"], encoding="utf-8") as f:
+            content = json.load(f)
+        assert content["benchmark"] == "tiny"
+
+    def test_tiny_dry_run_artifact_json_contains_adapter(self):
+        result = dry_run("tiny")
+        with open(result["dry_run_artifact"], encoding="utf-8") as f:
+            content = json.load(f)
+        assert content["adapter"] == "TinyFixtureAdapter"
+
+    def test_tiny_dry_run_num_tasks(self):
+        result = dry_run("tiny")
+        assert result["num_tasks"] == 2
+
+    def test_run_tiny_dry_run_mode_matches(self):
+        result = run("tiny", dry_run_mode=True)
+        assert result["benchmark"] == "tiny"
+        assert result["status"] == "dry-run skeleton"
+        assert "dry_run_artifact" in result

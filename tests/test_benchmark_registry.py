@@ -9,6 +9,7 @@ import pytest
 
 from reliability_harness.benchmarks.adapters.humaneval import HumanEvalAdapter
 from reliability_harness.benchmarks.adapters.mbpp import MBPPAdapter
+from reliability_harness.benchmarks.adapters.tiny import TinyFixtureAdapter
 from reliability_harness.benchmarks.registry import get_adapter, list_benchmarks
 
 
@@ -24,6 +25,14 @@ class TestGetAdapter:
     def test_get_adapter_case_insensitive(self):
         assert isinstance(get_adapter("MBPP"), MBPPAdapter)
         assert isinstance(get_adapter("HumanEval"), HumanEvalAdapter)
+
+    def test_get_adapter_tiny_returns_tiny_adapter(self):
+        adapter = get_adapter("tiny")
+        assert isinstance(adapter, TinyFixtureAdapter)
+
+    def test_get_adapter_tiny_case_insensitive(self):
+        assert isinstance(get_adapter("Tiny"), TinyFixtureAdapter)
+        assert isinstance(get_adapter("TINY"), TinyFixtureAdapter)
 
     def test_get_adapter_unknown_raises_value_error(self):
         with pytest.raises(ValueError, match="Unknown benchmark"):
@@ -45,6 +54,9 @@ class TestListBenchmarks:
 
     def test_list_benchmarks_contains_humaneval(self):
         assert "humaneval" in list_benchmarks()
+
+    def test_list_benchmarks_contains_tiny(self):
+        assert "tiny" in list_benchmarks()
 
     def test_list_benchmarks_is_sorted(self):
         result = list_benchmarks()

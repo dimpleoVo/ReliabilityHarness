@@ -10,6 +10,7 @@ The sole authoritative entrypoints for ReliabilityHarness paper experiments are:
 
 **Shell (recommended):**
 ```bash
+bash scripts/run_benchmark_dry_run.sh tiny        # Benchmark-1: tiny fixture (writes artifact)
 bash scripts/run_benchmark_dry_run.sh mbpp
 bash scripts/run_benchmark_dry_run.sh humaneval
 ```
@@ -19,22 +20,55 @@ bash scripts/run_benchmark_dry_run.sh humaneval
 python -m reliability_harness.experiments.run_benchmark --benchmark <name> [--dry-run]
 ```
 
-Supported benchmarks: `mbpp`, `humaneval`
+Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
-> **Current phase:** dry-run only. Full benchmark execution (data loading, agent runtime,
-> sandbox) is not yet implemented. Full run will be enabled in the next benchmark phase.
+> **Current phase:** `tiny` dry-run is fully functional and writes an output artifact.
+> Full `mbpp`/`humaneval` execution (data loading, agent runtime, sandbox) is not yet
+> implemented. Full run will be enabled in the next benchmark phase.
+
+---
+
+## Benchmark-1: Tiny Fixture Dry-Run
+
+`tiny` is a local deterministic fixture benchmark for pipeline smoke tests.
+It uses `data/fixtures/tiny_code_tasks.json` (2 tasks). No LLM. No Docker. No memory.
+
+```bash
+# Shell
+bash scripts/run_benchmark_dry_run.sh tiny
+
+# Python
+python -m reliability_harness.experiments.run_benchmark --benchmark tiny --dry-run
+
+# CLI
+python -m reliability_harness.cli benchmark --benchmark tiny --dry-run
+```
+
+The dry-run writes a manifest to:
+
+```
+outputs/benchmark_results/tiny_dry_run.json
+```
+
+The JSON includes `benchmark`, `adapter`, `status`, `num_tasks`, and path fields.
 
 ---
 
 ## Dry-run (Skeleton Validation)
 
-Use `--dry-run` (or `scripts/run_benchmark_dry_run.sh`) to validate the pipeline
-skeleton without loading data, calling LLMs, or writing outputs. Safe to run at any time.
+Use `--dry-run` (or `scripts/run_benchmark_dry_run.sh`) to validate the pipeline skeleton.
+
+- `tiny`: loads local fixture file, writes `outputs/benchmark_results/tiny_dry_run.json`.
+- `mbpp` / `humaneval`: skeleton only — no data loading, no output writes.
+
+No LLM calls, no Docker, no memory for any benchmark dry-run.
 
 ```bash
+bash scripts/run_benchmark_dry_run.sh tiny
 bash scripts/run_benchmark_dry_run.sh mbpp
 bash scripts/run_benchmark_dry_run.sh humaneval
 
+python -m reliability_harness.experiments.run_benchmark --benchmark tiny --dry-run
 python -m reliability_harness.experiments.run_benchmark --benchmark mbpp --dry-run
 python -m reliability_harness.experiments.run_benchmark --benchmark humaneval --dry-run
 ```
@@ -42,6 +76,7 @@ python -m reliability_harness.experiments.run_benchmark --benchmark humaneval --
 Also accessible from the unified CLI:
 
 ```bash
+python -m reliability_harness.cli benchmark --benchmark tiny --dry-run
 python -m reliability_harness.cli benchmark --benchmark mbpp --dry-run
 python -m reliability_harness.cli benchmark --benchmark humaneval --dry-run
 ```

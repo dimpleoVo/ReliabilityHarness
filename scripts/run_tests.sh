@@ -22,4 +22,5 @@ python -m pytest \
   tests/test_benchmark_registry.py \
   tests/test_benchmark_task_schema.py \
   tests/test_edit_distance_not_success_gate.py \
+  tests/test_tiny_fixture_adapter.py \
   -v

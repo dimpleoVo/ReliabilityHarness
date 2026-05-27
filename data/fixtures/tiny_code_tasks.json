@@ -1,0 +1,36 @@
+[
+  {
+    "task_id": "tiny_001",
+    "benchmark": "tiny",
+    "prompt": "Write a Python function called `add` that takes two integers and returns their sum.",
+    "entry_point": "add",
+    "tests": [
+      "assert add(1, 2) == 3",
+      "assert add(0, 0) == 0",
+      "assert add(-1, 1) == 0"
+    ],
+    "reference_solution": "def add(a, b):\n    return a + b",
+    "metadata": {
+      "difficulty": "easy",
+      "source": "tiny_fixture",
+      "split": "test"
+    }
+  },
+  {
+    "task_id": "tiny_002",
+    "benchmark": "tiny",
+    "prompt": "Write a Python function called `is_even` that takes an integer and returns True if it is even, False otherwise.",
+    "entry_point": "is_even",
+    "tests": [
+      "assert is_even(2) == True",
+      "assert is_even(3) == False",
+      "assert is_even(0) == True"
+    ],
+    "reference_solution": "def is_even(n):\n    return n % 2 == 0",
+    "metadata": {
+      "difficulty": "easy",
+      "source": "tiny_fixture",
+      "split": "test"
+    }
+  }
+]
