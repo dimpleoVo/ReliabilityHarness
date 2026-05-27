@@ -145,6 +145,34 @@ All paths resolved via `reliability_harness.utils.paths` — no `os.getcwd()` de
 
 ---
 
+## Migration-4A/B: Official entrypoint cleanup and root benchmark tests (completed)
+
+**Branch:** `migration/reliability-harness-structure`
+
+### What Migration-4A/B completes
+
+1. Creates `scripts/run_benchmark_dry_run.sh`: official shell entrypoint for dry-run benchmark validation. Works from any cwd. No ReActX / run_eval.py / EvalForge dependencies. No LLM calls, no data loading, no output writes.
+2. Creates `tests/test_benchmark_entrypoint.py`: root-level tests for `reliability_harness.experiments.run_benchmark`. Tests dry-run manifest for mbpp and humaneval. Tests that full run (non-dry-run) raises `NotImplementedError`.
+3. Creates `tests/test_benchmark_registry.py`: root-level tests for `reliability_harness.benchmarks.registry`. Tests `get_adapter("mbpp")` returns `MBPPAdapter`, `get_adapter("humaneval")` returns `HumanEvalAdapter`, unknown benchmark raises `ValueError`.
+4. Creates `tests/test_benchmark_task_schema.py`: root-level tests for `reliability_harness.benchmarks.task_schema.BenchmarkTask`. Tests all fields, defaults, `to_dict()` / `from_dict()` roundtrip.
+5. Updates `README.md` Quick Start: `scripts/run_benchmark_dry_run.sh` and `python -m reliability_harness.experiments.run_benchmark --dry-run` are the primary recommended commands. Deprecated table updated.
+6. Updates `docs/BENCHMARK_ENTRYPOINT.md`: adds Migration-4A/B status note; documents `scripts/run_benchmark_dry_run.sh` as official shell entrypoint; updates deprecated table; documents root-level tests.
+7. Updates `docs/ARCHITECTURE.md`: adds "Current Migration Status" table; documents Migration-4A/B completion.
+8. Updates `scripts/run_benchmark_mock.sh`: adds explicit LEGACY header; references new entrypoint. Behavior unchanged.
+9. Updates `scripts/run_tests.sh`: adds note about new root tests and legacy status of `ReActX/test_*.py`. Behavior unchanged.
+
+### What Migration-4A/B does NOT change
+
+- No evaluation semantics, agent logic, retry/reflection/memory behavior.
+- No business logic in any existing module.
+- `ReActX/` directory not deleted; `ReActX/test_*.py` not deleted or moved.
+- `app/` and `evalforge/` shims not deleted.
+- No MBPP/HumanEval data loading implemented.
+- No SWE-bench or LiveCodeBench work.
+- No git add / commit / push.
+
+---
+
 ## Migration-2B-2: Physical data migration (next)
 
 Planned scope:

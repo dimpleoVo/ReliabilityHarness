@@ -138,6 +138,26 @@ Supported benchmarks: `mbpp`, `humaneval`
 
 ---
 
+## Current Migration Status
+
+| Phase | Status |
+|---|---|
+| Migration-1: reliability_harness package creation | Completed |
+| Migration-2A: Docker / runtime path stabilization | Completed |
+| Migration-2B-1: Unified data/output paths | Completed |
+| Benchmark-0: Benchmark adapter skeleton + experiment entrypoint | Completed |
+| **Migration-4A/B: Official entrypoint cleanup + root tests** | **In progress** |
+| Migration-2B-2: Physical data migration | Planned |
+| Migration-3: Test migration and legacy cleanup | Planned |
+| Migration-4 (full): MBPP/HumanEval adapter implementation | Planned |
+
+**Migration-4A/B adds:**
+- `scripts/run_benchmark_dry_run.sh` — official shell entrypoint for dry-run validation.
+- `tests/test_benchmark_entrypoint.py`, `tests/test_benchmark_registry.py`, `tests/test_benchmark_task_schema.py` — root-level tests that are the authoritative constraints on the Benchmark-0 skeleton. These supersede `ReActX/test_*.py` for new-architecture concerns.
+- `ReActX/test_*.py` are preserved but are NOT constraints on `reliability_harness.*` behavior.
+
+---
+
 ## Compatibility Namespaces
 
 The following are **shim-only** namespaces at repo root. They redirect imports to `reliability_harness.*` and must not be used as primary entry points in new code.

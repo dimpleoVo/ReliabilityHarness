@@ -50,14 +50,22 @@ All commands run from repo root. Set `PYTHONPATH` to the repo root.
 ```bash
 export PYTHONPATH=$(pwd)
 
+# Validate benchmark pipeline skeleton — no data loading, no LLM calls, no output writes
+bash scripts/run_benchmark_dry_run.sh mbpp
+bash scripts/run_benchmark_dry_run.sh humaneval
+
+# Equivalent Python invocation
+python -m reliability_harness.experiments.run_benchmark --benchmark mbpp --dry-run
+python -m reliability_harness.experiments.run_benchmark --benchmark humaneval --dry-run
+
+# Run new root-level benchmark tests (Migration-4A/B)
+python -m pytest tests/test_benchmark_entrypoint.py tests/test_benchmark_registry.py tests/test_benchmark_task_schema.py
+
 # Show package info
 python -m reliability_harness.cli info
 
 # Show resolved paths
 python -m reliability_harness.cli paths
-
-# Run tests
-bash scripts/run_tests.sh
 ```
 
 ---
@@ -92,18 +100,18 @@ Also accessible from the unified CLI:
 python -m reliability_harness.cli benchmark --benchmark mbpp --dry-run
 ```
 
-### Deprecated entry points (not for paper results)
+### Deprecated / Legacy entry points (not for paper results)
 
-| Script / Entry | Reason |
-|---|---|
-| `ReActX/benchmark_reliability.py` | EvalForge-era; not connected to ReliabilityHarness evaluation pipeline |
-| `ReActX/evaluate.py` | Legacy EvalForge runner |
-| `run_eval.py` | EvalForge-style; outputs not canonical for paper |
-| `scripts/run_benchmark_mock.sh` | Calls run_eval.py (EvalForge-era); use `--dry-run` instead |
-| `ReActX/test_*.py` | Temporary migration smoke tests; not constraints on new architecture |
-| `ReActX/benchmark_results/` | Historical data; not paper results |
-| `ReActX/runs/` | Historical data; not paper results |
-| `ReActX/reports/` | Historical data; not paper results |
+| Script / Entry | Status | Reason |
+|---|---|---|
+| `ReActX/benchmark_reliability.py` | **Deprecated** | EvalForge-era; not connected to ReliabilityHarness pipeline |
+| `ReActX/evaluate.py` | **Deprecated** | Legacy EvalForge runner |
+| `run_eval.py` | **Legacy** | EvalForge-style; outputs not canonical for paper |
+| `scripts/run_benchmark_mock.sh` | **Legacy** | Calls run_eval.py (EvalForge-era); use `run_benchmark_dry_run.sh` instead |
+| `ReActX/test_*.py` | **Legacy smoke tests** | Not constraints on new architecture; root `tests/` supersedes these |
+| `ReActX/benchmark_results/` | **Historical data** | Not paper results; not to be cited |
+| `ReActX/runs/` | **Historical data** | Not paper results |
+| `ReActX/reports/` | **Historical data** | Not paper results |
 
 See [docs/BENCHMARK_ENTRYPOINT.md](docs/BENCHMARK_ENTRYPOINT.md) for full reference.
 

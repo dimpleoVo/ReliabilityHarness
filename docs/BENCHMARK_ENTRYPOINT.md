@@ -1,28 +1,45 @@
 # ReliabilityHarness — Benchmark Entrypoint Reference
 
-## Formal Paper Experiment Entrypoint
+> **Migration-4A/B status:** Benchmark-0 skeleton is complete.
+> Root-level `tests/` are the authoritative test constraints for the new architecture.
+> `ReActX/test_*.py` are legacy and are NOT constraints on `reliability_harness.*`.
 
-The sole authoritative entrypoint for ReliabilityHarness paper experiments is:
+## Formal Paper Experiment Entrypoints
 
+The sole authoritative entrypoints for ReliabilityHarness paper experiments are:
+
+**Shell (recommended):**
+```bash
+bash scripts/run_benchmark_dry_run.sh mbpp
+bash scripts/run_benchmark_dry_run.sh humaneval
+```
+
+**Python module:**
 ```bash
 python -m reliability_harness.experiments.run_benchmark --benchmark <name> [--dry-run]
 ```
 
 Supported benchmarks: `mbpp`, `humaneval`
 
+> **Current phase:** dry-run only. Full benchmark execution (data loading, agent runtime,
+> sandbox) is not yet implemented. Full run will be enabled in the next benchmark phase.
+
 ---
 
 ## Dry-run (Skeleton Validation)
 
-Use `--dry-run` to validate the pipeline skeleton without loading data, calling
-LLMs, or writing outputs. Safe to run at any time.
+Use `--dry-run` (or `scripts/run_benchmark_dry_run.sh`) to validate the pipeline
+skeleton without loading data, calling LLMs, or writing outputs. Safe to run at any time.
 
 ```bash
+bash scripts/run_benchmark_dry_run.sh mbpp
+bash scripts/run_benchmark_dry_run.sh humaneval
+
 python -m reliability_harness.experiments.run_benchmark --benchmark mbpp --dry-run
 python -m reliability_harness.experiments.run_benchmark --benchmark humaneval --dry-run
 ```
 
-Also accessible from the CLI:
+Also accessible from the unified CLI:
 
 ```bash
 python -m reliability_harness.cli benchmark --benchmark mbpp --dry-run
@@ -75,14 +92,29 @@ All paths are resolved from repo root via `reliability_harness.utils.paths` — 
 
 | Script / Entry | Status | Reason |
 |---|---|---|
-| `ReActX/benchmark_reliability.py` | **Deprecated** | EvalForge-era; not connected to ReliabilityHarness evaluation pipeline |
+| `ReActX/benchmark_reliability.py` | **Deprecated** | EvalForge-era; not connected to ReliabilityHarness pipeline |
 | `ReActX/evaluate.py` | **Deprecated** | Legacy EvalForge runner |
 | `run_eval.py` | **Legacy** | EvalForge-style; outputs not canonical for paper |
-| `scripts/run_benchmark_mock.sh` | **Transitional** | Calls run_eval.py; use run_benchmark --dry-run instead |
-| `ReActX/test_*.py` | **Legacy smoke tests** | Not constraints on new architecture; will migrate to tests/ in Migration-3 |
+| `scripts/run_benchmark_mock.sh` | **Legacy** | Calls run_eval.py; use `scripts/run_benchmark_dry_run.sh` instead |
+| `ReActX/test_*.py` | **Legacy smoke tests** | Not constraints on new architecture; root `tests/` supersedes these |
 | `ReActX/benchmark_results/` | **Historical data** | Not paper results; not to be cited |
 | `ReActX/runs/` | **Historical data** | Not paper results |
 | `ReActX/reports/` | **Historical data** | Not paper results |
+
+## Root-level Tests (Migration-4A/B, Authoritative)
+
+The following root-level tests are the authoritative constraints on the Benchmark-0 skeleton:
+
+```bash
+python -m pytest tests/test_benchmark_entrypoint.py
+python -m pytest tests/test_benchmark_registry.py
+python -m pytest tests/test_benchmark_task_schema.py
+```
+
+These tests:
+- Only import `reliability_harness.*`.
+- Do not call LLMs, Docker, or load real benchmark data.
+- Replace `ReActX/test_*.py` as new-architecture constraints.
 
 ---
 
