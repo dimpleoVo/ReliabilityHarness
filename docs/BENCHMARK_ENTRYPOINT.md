@@ -1,8 +1,8 @@
 # ReliabilityHarness — Benchmark Entrypoint Reference
 
-> **Migration-4A/B status:** Benchmark-0 skeleton is complete.
+> **Migration-5A status:** `ReActX/`, `app/`, and `evalforge/` have been archived to `legacy/`.
 > Root-level `tests/` are the authoritative test constraints for the new architecture.
-> `ReActX/test_*.py` are legacy and are NOT constraints on `reliability_harness.*`.
+> `legacy/ReActX/test_*.py` are archived legacy tests and are NOT constraints on `reliability_harness.*`.
 
 ## Formal Paper Experiment Entrypoints
 
@@ -107,14 +107,14 @@ Official benchmark runs **do not** reuse legacy ReActX memory by default.
 
 | Script / Entry | Status | Reason |
 |---|---|---|
-| `ReActX/benchmark_reliability.py` | **Deprecated** | EvalForge-era; not connected to ReliabilityHarness pipeline |
-| `ReActX/evaluate.py` | **Deprecated** | Legacy EvalForge runner |
+| `legacy/ReActX/benchmark_reliability.py` | **Archived / Deprecated** | EvalForge-era; not connected to ReliabilityHarness pipeline |
+| `legacy/ReActX/evaluate.py` | **Archived / Deprecated** | Legacy EvalForge runner |
 | `run_eval.py` | **Legacy** | EvalForge-style; outputs not canonical for paper |
 | `scripts/legacy/run_benchmark_mock.sh` | **Legacy** | Calls run_eval.py (EvalForge-era); use `scripts/run_benchmark_dry_run.sh` instead |
-| `ReActX/test_*.py` | **Legacy smoke tests** | Not constraints on new architecture; root `tests/` supersedes these |
-| `ReActX/benchmark_results/` | **Historical data** | Not paper results; not to be cited |
-| `ReActX/runs/` | **Historical data** | Not paper results |
-| `ReActX/reports/` | **Historical data** | Not paper results |
+| `legacy/ReActX/test_*.py` | **Archived / Legacy smoke tests** | Not constraints on new architecture; root `tests/` supersedes these |
+| `legacy/ReActX/benchmark_results/` | **Historical data** | Not paper results; not to be cited |
+| `legacy/ReActX/runs/` | **Historical data** | Not paper results |
+| `legacy/ReActX/reports/` | **Historical data** | Not paper results |
 
 ## Root-level Tests (Migration-4A/B + 4C, Authoritative)
 
@@ -134,9 +134,9 @@ python -m pytest tests/test_benchmark_task_schema.py
 These tests:
 - Only import `reliability_harness.*`.
 - Do not call LLMs, Docker, or load real benchmark data.
-- Supersede `ReActX/test_*.py` as new-architecture constraints.
+- Supersede `legacy/ReActX/test_*.py` as new-architecture constraints.
 
-`ReActX/test_*.py` tests are legacy migration checks only. They are NOT
+`legacy/ReActX/test_*.py` tests are archived legacy migration checks only. They are NOT
 acceptance criteria for the paper benchmark path. Manual legacy runs are
 available via `scripts/legacy/run_reactx_tests.sh`.
 

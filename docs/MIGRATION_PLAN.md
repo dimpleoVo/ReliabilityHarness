@@ -309,10 +309,10 @@ All paths resolved via `reliability_harness.utils.paths` — no `os.getcwd()` de
 ## Migration-2B-2: Physical data migration (next)
 
 Planned scope:
-- Copy `ReActX/data/tasks/reactx_closed_loop_tasks.json` → `data/tasks/reliability_tasks.json`.
-- Copy `ReActX/data/reliability_tasks.json` if present → `data/`.
+- Copy `legacy/ReActX/data/tasks/reactx_closed_loop_tasks.json` → `data/tasks/reliability_tasks.json`.
+- Copy `legacy/ReActX/data/reliability_tasks.json` if present → `data/`.
 - Move host `chroma_db_data/` content → `data/chroma_db_data/` (after service stop).
-- Move `ReActX/benchmark_results/` → `outputs/benchmark_results/` (historical data).
+- Move `legacy/ReActX/benchmark_results/` → `outputs/benchmark_results/` (historical data).
 - After copy verified: remove `REACTX_DATASET_PATH` deprecated alias from `dataset_loader.py`.
 - `LEGACY_REACTX_ROOT` has already been removed from `paths.py` (Migration-4H).
 
@@ -323,11 +323,11 @@ Each phase must be committed separately.
 ## Migration-3: Test migration and legacy cleanup (future)
 
 Planned scope:
-- Move `ReActX/test_*.py` → `tests/` (repo root).
+- Move `legacy/ReActX/test_*.py` → `tests/` (repo root).
 - Update test imports to `reliability_harness.*`.
-- Remove `app/` and `evalforge/` shims when no longer needed.
-- Remove `ReActX/app/` and `ReActX/evalforge/` duplicate legacy directories.
-- Rename cosmetic legacy identifiers (`ReActXAgent`, `run_evalforge`, `reactx_failure_memory`) as a batch.
+- Remove `legacy/shims/app/` and `legacy/shims/evalforge/` shims when no longer needed.
+- Remove `legacy/ReActX/app/` and `legacy/ReActX/evalforge/` duplicate legacy directories.
+- Rename cosmetic legacy identifiers (`ReActXAgent`, `run_evalforge`) as a batch.
 
 ---
 
@@ -337,3 +337,35 @@ Planned scope (after Migration-1–3 stabilize):
 - Implement dataset adapter for MBPP and HumanEval.
 - Wire into `reliability_harness.evaluation.runner`.
 - Do NOT start SWE-bench until MBPP/HumanEval basics work.
+
+---
+
+## Migration-5A: Archive root-level legacy directories (completed)
+
+**Branch:** `migration/reliability-harness-structure`
+
+### What Migration-5A completes
+
+1. Archives `ReActX/` → `legacy/ReActX/` via `git mv`. Preserves full rename history.
+2. Archives `app/` → `legacy/shims/app/` via `git mv`. Preserves shim files and history.
+3. Archives `evalforge/` → `legacy/shims/evalforge/` via `git mv`. Preserves shim files and history.
+4. Creates `legacy/README.md` — explains all legacy/ contents, official entrypoints, path policy, and paper result exclusion.
+5. Updates `scripts/legacy/run_reactx_tests.sh` — paths updated from `ReActX/` → `legacy/ReActX/`; adds explicit legacy compatibility warning banner.
+6. Updates `scripts/legacy/run_benchmark_mock.sh` — `PYTHONPATH` updated to include `legacy/ReActX`; adds explicit legacy compatibility warning banner.
+7. Updates `README.md` — all path references updated to `legacy/ReActX/`, `legacy/shims/app/`, `legacy/shims/evalforge/`.
+8. Updates `docs/ARCHITECTURE.md` — all path references updated; "Compatibility Namespaces" section updated.
+9. Updates `docs/BENCHMARK_ENTRYPOINT.md` — all `ReActX/` table entries updated to `legacy/ReActX/`; migration status note updated.
+10. Updates `docs/MIGRATION_PLAN.md` — forward references to `ReActX/` in future phases updated to `legacy/ReActX/`.
+11. Updates `.gitignore` — adds `legacy/ReActX/` runtime output ignore rules.
+12. Updates `claude.md` — path references in "Files Known to Be Important" updated to reflect archive.
+
+### What Migration-5A does NOT change
+
+- `reliability_harness/` — no code changes, no business logic changes.
+- `tests/` — not touched.
+- `scripts/run_tests.sh`, `scripts/run_benchmark_dry_run.sh` — not touched.
+- `docker/` — not touched.
+- `data/` / `outputs/` — not touched.
+- All evaluation, agent, retry, reflection, memory, benchmark logic — unchanged.
+- Content of legacy files — only moved, not modified.
+- No git add / commit / push.

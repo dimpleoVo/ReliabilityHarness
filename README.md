@@ -38,8 +38,8 @@ reliability_harness/
 ```
 
 Legacy namespace notes:
-- `ReActX/` — historical implementation directory; preserved for data, tests, and benchmark results.
-- `app/` and `evalforge/` at repo root — compatibility shims only; not primary entry points.
+- `legacy/ReActX/` — **archived** historical implementation directory; preserved for data, tests, and benchmark results. Not at repo root.
+- `legacy/shims/app/` and `legacy/shims/evalforge/` — **deprecated** compatibility shims; archived to `legacy/`. Not at repo root.
 
 ---
 
@@ -104,14 +104,14 @@ python -m reliability_harness.cli benchmark --benchmark mbpp --dry-run
 
 | Script / Entry | Status | Reason |
 |---|---|---|
-| `ReActX/benchmark_reliability.py` | **Deprecated** | EvalForge-era; not connected to ReliabilityHarness pipeline |
-| `ReActX/evaluate.py` | **Deprecated** | Legacy EvalForge runner |
+| `legacy/ReActX/benchmark_reliability.py` | **Archived / Deprecated** | EvalForge-era; not connected to ReliabilityHarness pipeline |
+| `legacy/ReActX/evaluate.py` | **Archived / Deprecated** | Legacy EvalForge runner |
 | `run_eval.py` | **Legacy** | EvalForge-style; outputs not canonical for paper |
 | `scripts/legacy/run_benchmark_mock.sh` | **Legacy** | Calls run_eval.py (EvalForge-era); use `run_benchmark_dry_run.sh` instead |
-| `ReActX/test_*.py` | **Legacy smoke tests** | Not constraints on new architecture; root `tests/` supersedes these. Manual legacy runs via `scripts/legacy/run_reactx_tests.sh` |
-| `ReActX/benchmark_results/` | **Historical data** | Not paper results; not to be cited |
-| `ReActX/runs/` | **Historical data** | Not paper results |
-| `ReActX/reports/` | **Historical data** | Not paper results |
+| `legacy/ReActX/test_*.py` | **Archived / Legacy smoke tests** | Not constraints on new architecture; root `tests/` supersedes these. Manual legacy runs via `scripts/legacy/run_reactx_tests.sh` |
+| `legacy/ReActX/benchmark_results/` | **Historical data** | Not paper results; not to be cited |
+| `legacy/ReActX/runs/` | **Historical data** | Not paper results |
+| `legacy/ReActX/reports/` | **Historical data** | Not paper results |
 
 See [docs/BENCHMARK_ENTRYPOINT.md](docs/BENCHMARK_ENTRYPOINT.md) for full reference.
 
@@ -138,7 +138,7 @@ Environment variable overrides (in priority order):
 |---|---|
 | `RELIABILITY_HARNESS_DATASET_PATH` | Primary dataset path override |
 | `DATASET_PATH` | Secondary dataset path override |
-| `REACTX_DATASET_PATH` | Deprecated explicit alias — only used when explicitly set; does **not** auto-fallback to `ReActX/data/` |
+| `REACTX_DATASET_PATH` | Deprecated explicit alias — only used when explicitly set; does **not** auto-fallback to `legacy/ReActX/data/` |
 
 See `.env.example` for a full template.
 
@@ -147,7 +147,7 @@ See `.env.example` for a full template.
 ## Docker
 
 All Docker configuration lives under `docker/` at repo root.
-Do **not** use `ReActX/infra/docker/` — that is the legacy location.
+Do **not** use `legacy/ReActX/infra/docker/` — that is the archived legacy location.
 
 **Static validation** (no `.env` required):
 

@@ -155,12 +155,12 @@ Supported benchmarks: `mbpp`, `humaneval`
 
 **Migration-4A/B adds:**
 - `scripts/run_benchmark_dry_run.sh` — official shell entrypoint for dry-run validation.
-- `tests/test_benchmark_entrypoint.py`, `tests/test_benchmark_registry.py`, `tests/test_benchmark_task_schema.py` — root-level tests that are the authoritative constraints on the Benchmark-0 skeleton. These supersede `ReActX/test_*.py` for new-architecture concerns.
+- `tests/test_benchmark_entrypoint.py`, `tests/test_benchmark_registry.py`, `tests/test_benchmark_task_schema.py` — root-level tests that are the authoritative constraints on the Benchmark-0 skeleton. These supersede `legacy/ReActX/test_*.py` for new-architecture concerns.
 
 **Migration-4C adds:**
-- `scripts/run_tests.sh` now runs only root-level `tests/` — no `ReActX/run_tests.py`, no `PYTHONPATH=ReActX`.
-- `scripts/legacy/run_reactx_tests.sh` — isolated legacy runner for old ReActX tests; not a primary entrypoint.
-- `ReActX/test_*.py` are preserved but are NOT constraints on `reliability_harness.*` behavior.
+- `scripts/run_tests.sh` now runs only root-level `tests/` — no `legacy/ReActX/run_tests.py`, no `PYTHONPATH=legacy/ReActX`.
+- `scripts/legacy/run_reactx_tests.sh` — isolated legacy runner for old archived ReActX tests; not a primary entrypoint.
+- `legacy/ReActX/test_*.py` are preserved but are NOT constraints on `reliability_harness.*` behavior.
 
 ---
 
@@ -178,12 +178,12 @@ bash scripts/run_tests.sh   # official entrypoint — runs tests/ only
 
 All root tests import only `reliability_harness.*`. No LLM calls, no Docker, no real benchmark data.
 
-**Legacy tests:** `ReActX/test_*.py`
+**Legacy tests (archived):** `legacy/ReActX/test_*.py`
 
 - Run manually via `scripts/legacy/run_reactx_tests.sh`.
 - NOT part of the paper benchmark path.
 - NOT constraints on `reliability_harness.*` architecture.
-- Preserved for historical reference; will be retired in Migration-3.
+- Archived to `legacy/` in Migration-5A; preserved for historical reference.
 
 ---
 
@@ -201,19 +201,19 @@ All root tests import only `reliability_harness.*`. No LLM calls, no Docker, no 
 
 | Script | Purpose |
 |---|---|
-| `scripts/legacy/run_reactx_tests.sh` | Manual legacy runner for `ReActX/test_*.py` — not part of paper path |
+| `scripts/legacy/run_reactx_tests.sh` | Manual legacy runner for `legacy/ReActX/test_*.py` — not part of paper path |
 | `scripts/legacy/run_benchmark_mock.sh` | Legacy EvalForge-era mock benchmark runner via `run_eval.py` — not for paper results |
 
 ---
 
 ## Compatibility Namespaces
 
-The following are **shim-only** namespaces at repo root. They redirect imports to `reliability_harness.*` and must not be used as primary entry points in new code.
+The following are **archived shim-only** namespaces, moved to `legacy/` in Migration-5A. They redirect imports to `reliability_harness.*` and must not be used as primary entry points in new code.
 
-- `app/` → shims to `reliability_harness.runtime.*` and `reliability_harness.*`
-- `evalforge/` → shims to `reliability_harness.evaluation.*`
+- `legacy/shims/app/` → shims to `reliability_harness.runtime.*` and `reliability_harness.*`
+- `legacy/shims/evalforge/` → shims to `reliability_harness.evaluation.*`
 
-Legacy data and test directories (`ReActX/data/`, `ReActX/benchmark_results/`, `ReActX/test_*.py`) are preserved in `ReActX/` and will be migrated in a later phase.
+Legacy data and test directories (`legacy/ReActX/data/`, `legacy/ReActX/benchmark_results/`, `legacy/ReActX/test_*.py`) are archived in `legacy/ReActX/`. They are not paper results and are not constraints on the current architecture.
 
 ---
 

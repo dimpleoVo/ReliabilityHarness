@@ -91,11 +91,14 @@ README_backup.md
 *.docx
 ~$*
 
-# runtime outputs
-ReActX/runs/
-ReActX/reports/
-ReActX/demo_runs/
-ReActX/demo_reports/
+# runtime outputs (legacy archive — paths updated after Migration-5A)
+legacy/ReActX/runs/
+legacy/ReActX/reports/
+legacy/ReActX/demo_runs/
+legacy/ReActX/demo_reports/
+legacy/ReActX/benchmark_results/
+legacy/ReActX/data/chroma_db_data/
+legacy/ReActX/data/failure_memory.jsonl
 
 # python
 __pycache__/

@@ -101,37 +101,29 @@ Known high-priority issues:
 
 ## Files Known to Be Important
 
-Likely core files:
+Likely core files (official `reliability_harness/` package):
 
-- `app/loop/closed_loop_runner.py`
-- `app/eval/evaluator.py`
-- `app/loop/eval_adapter.py`
-- `app/loop/retry_effectiveness.py`
-- `app/loop/failure_taxonomy.py`
-- `app/loop/tool_reliability.py`
-- `app/loop/tool_process_reliability.py`
-- `app/reasoning/trajectory_analyzer.py`
-- `app/reasoning/reflection_evaluator.py`
-- `app/artifacts/run_artifact.py`
-- `app/reporting/reliability_report.py`
-- `app/agent/react_agent.py`
-- `app/agent/trajectory.py`
-- `app/sandbox_client.py`
-- `sandbox/executor.py`
-- `benchmark_reliability.py`
-- `app/memory/`
-- `utils/dataset_loader.py`
+- `reliability_harness/runtime/loop/closed_loop_runner.py`
+- `reliability_harness/evaluation/`
+- `reliability_harness/runtime/loop/retry_effectiveness.py`
+- `reliability_harness/runtime/loop/failure_taxonomy.py`
+- `reliability_harness/runtime/loop/tool_process_reliability.py`
+- `reliability_harness/reasoning/trajectory_analyzer.py`
+- `reliability_harness/reasoning/reflection_evaluator.py`
+- `reliability_harness/artifacts/run_artifact.py`
+- `reliability_harness/reporting/reliability_report.py`
+- `reliability_harness/runtime/agent/react_agent.py`
+- `reliability_harness/runtime/agent/trajectory.py`
+- `reliability_harness/sandbox/client.py`
+- `reliability_harness/sandbox/executor.py`
+- `reliability_harness/memory/`
+- `reliability_harness/utils/dataset_loader.py`
 
-Legacy areas likely to be removed or isolated:
+Archived legacy areas (moved to `legacy/` in Migration-5A — do not use as primary entrypoints):
 
-- `evalforge/datasets/omnidocbench_loader.py`
-- `evalforge/datasets/docai_demo.py`
-- `evalforge/tasks/recognition_task.py`
-- `evalforge/tasks/detection_task.py`
-- `evalforge/models/mock_docai.py`
-- `evalforge/reports/leaderboard_report.py`
-- `evalforge/analysis/diff_utils.py`
-- `evalforge/analysis/diff_html.py`
+- `legacy/shims/app/` — deprecated compatibility shim (was root-level `app/`)
+- `legacy/shims/evalforge/` — deprecated compatibility shim (was root-level `evalforge/`)
+- `legacy/ReActX/` — archived historical implementation
 - `frontend/`
 - `promoter/`
 
