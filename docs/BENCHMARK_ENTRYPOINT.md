@@ -28,6 +28,47 @@ Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
 ---
 
+## Benchmark-4C: Generation-to-Execution Integration Helper
+
+**Status:** Benchmark-4C.1 implemented (integration helper only — no CLI wiring).
+
+**Scope:** `execute_generation_artifact()` connects a Benchmark-3 per-task generation artifact to the Benchmark-4 execution contract.  
+**Not in scope:** `run_benchmark --execute`, CLI integration, retry, memory, process metrics.
+
+| Component | File | Status |
+|---|---|---|
+| Integration helper | `reliability_harness/runtime/execution/integration.py` | Done |
+| Unit tests (fake backend) | `tests/test_execution_integration.py` | Done |
+
+**Data flow:**
+```
+generation artifact (JSON)
+  -> extracted_code + BenchmarkTask.tests (via adapter)
+  -> ExecutionInput
+  -> execute_in_docker (fake backend in tests) or execute_locally
+  -> ExecutionResult
+  -> ExecutionArtifact -> outputs/executions/{run_id}/
+```
+
+**Benchmark-4C.1 boundaries:**
+- `run_benchmark.py` and `cli.py` are **unchanged** — no `--execute` flag yet.
+- Default tests use fake Docker backend — no Docker daemon required.
+- Real Docker execution is validated in Benchmark-4B.2 smoke test (separate).
+- No retry, memory, or process reliability metrics.
+- `use_docker=False` path calls `execute_locally` — only safe for trusted fixture code.
+
+**Exception:** `ExecutionIntegrationError` is raised for:
+- Unreadable artifact JSON
+- `extraction_status != "success"`
+- `extracted_code` missing or empty
+- `benchmark` or `task_id` missing
+- `task_id` not found in benchmark adapter
+
+**Summary dict keys:**
+`generation_artifact_path`, `execution_artifact_path`, `run_id`, `benchmark`, `task_id`, `model_name`, `extraction_status`, `runner_type`, `docker_used`, `execution_performed`, `tests_passed`, `error_type`.
+
+---
+
 ## Benchmark-4B: Docker Execution Runner
 
 **Status:** Benchmark-4B.1 implemented (Docker runner schema adapter, mock backend tests only).

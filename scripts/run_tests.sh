@@ -33,4 +33,5 @@ python -m pytest \
   tests/test_local_execution_runner.py \
   tests/test_execution_artifact.py \
   tests/test_docker_execution_runner.py \
+  tests/test_execution_integration.py \
   -v
