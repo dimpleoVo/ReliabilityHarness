@@ -148,10 +148,32 @@ def _execute_generate(
     )
 
 
+def _execute_generation_artifact_entrypoint(
+    path: str,
+    use_docker: bool = True,
+    timeout_ms: int = 10000,
+) -> dict[str, Any]:
+    """Execute a single per-task generation artifact (Benchmark-4C.2a).
+
+    Deferred import ensures dry-run and generate modes never import
+    execution helpers or trigger Docker-related imports.
+    """
+    from reliability_harness.runtime.execution.integration import execute_generation_artifact
+
+    return execute_generation_artifact(
+        generation_artifact_path=path,
+        use_docker=use_docker,
+        timeout_ms=timeout_ms,
+    )
+
+
 def run(
-    benchmark: str,
+    benchmark: str | None = None,
     dry_run_mode: bool = False,
     generate_mode: bool = False,
+    execute_generation_artifact_path: str | None = None,
+    execute_local: bool = False,
+    execution_timeout_ms: int = 10000,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Main benchmark run entry point.
@@ -160,24 +182,48 @@ def run(
     ----------
     benchmark:
         Benchmark name, e.g. "mbpp", "humaneval", or "tiny".
+        Required for dry_run_mode and generate_mode.
+        Not required when execute_generation_artifact_path is set
+        (benchmark is read from the artifact JSON).
     dry_run_mode:
         If True, return the pipeline manifest without loading data or calling LLMs.
     generate_mode:
         If True, run Benchmark-3 generation-only LLM candidate generation.
         Requires DEEPSEEK_API_KEY. Does not execute generated code.
+    execute_generation_artifact_path:
+        If set, execute a single per-task generation artifact JSON (Benchmark-4C.2a).
+        Uses Docker by default; set execute_local=True for local runner.
+        Does not call LLMClient, generator, memory, or retry.
+    execute_local:
+        If True, use local runner (use_docker=False) for execution mode.
+        Only safe for trusted fixture code.
     **kwargs:
         Options forwarded to generation mode: limit, model_name, temperature, max_tokens.
 
     Returns
     -------
     dict
-        Dry-run manifest, generation manifest, or future run summary.
+        Dry-run manifest, generation manifest, execution summary, or future run summary.
 
     Raises
     ------
+    ValueError
+        When multiple mutually exclusive modes are active simultaneously.
     NotImplementedError
-        When neither dry_run_mode nor generate_mode is True.
+        When no mode flag is set (full execution not yet implemented).
     """
+    # Mutual exclusion: --dry-run, --generate, --execute-generation-artifact
+    active_modes = [
+        ("--dry-run", dry_run_mode),
+        ("--generate", generate_mode),
+        ("--execute-generation-artifact", execute_generation_artifact_path is not None),
+    ]
+    active_names = [name for name, is_active in active_modes if is_active]
+    if len(active_names) > 1:
+        raise ValueError(
+            f"Modes are mutually exclusive: {' and '.join(active_names)} cannot be combined."
+        )
+
     if dry_run_mode:
         return dry_run(benchmark)
 
@@ -188,6 +234,13 @@ def run(
             model_name=str(kwargs.get("model_name", "deepseek-chat")),
             temperature=float(kwargs.get("temperature", 0.0)),
             max_tokens=int(kwargs.get("max_tokens", 1024)),
+        )
+
+    if execute_generation_artifact_path is not None:
+        return _execute_generation_artifact_entrypoint(
+            path=execute_generation_artifact_path,
+            use_docker=not execute_local,
+            timeout_ms=execution_timeout_ms,
         )
 
     raise NotImplementedError(
@@ -203,15 +256,22 @@ def main(argv: list[str] | None = None) -> None:
         description=(
             "ReliabilityHarness paper benchmark runner. "
             "Use --dry-run to validate the pipeline skeleton. "
-            "Use --generate for Benchmark-3 generation-only LLM candidate generation."
+            "Use --generate for Benchmark-3 generation-only LLM candidate generation. "
+            "Use --execute-generation-artifact for Benchmark-4C.2a single-artifact execution."
         ),
     )
     parser.add_argument(
         "--benchmark",
-        required=True,
+        required=False,
+        default=None,
         choices=list_benchmarks(),
         metavar="BENCHMARK",
-        help=f"Benchmark to run. Supported: {', '.join(list_benchmarks())}",
+        help=(
+            f"Benchmark to run. Supported: {', '.join(list_benchmarks())}. "
+            "Required for --dry-run and --generate. "
+            "Optional when --execute-generation-artifact is used "
+            "(benchmark is read from the artifact JSON)."
+        ),
     )
     parser.add_argument(
         "--dry-run",
@@ -231,6 +291,39 @@ def main(argv: list[str] | None = None) -> None:
             "Run Benchmark-3 generation-only LLM candidate generation. "
             "Requires DEEPSEEK_API_KEY in .env or environment. "
             "Does not execute generated code."
+        ),
+    )
+    parser.add_argument(
+        "--execute-generation-artifact",
+        dest="execute_generation_artifact",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Execute a single per-task generation artifact JSON (Benchmark-4C.2a). "
+            "Input must be a per-task artifact produced by --generate. "
+            "Default runner is Docker. Use --execute-local for local runner. "
+            "Cannot be combined with --dry-run or --generate."
+        ),
+    )
+    parser.add_argument(
+        "--execute-local",
+        dest="execute_local",
+        action="store_true",
+        default=False,
+        help=(
+            "Use local runner instead of Docker for --execute-generation-artifact. "
+            "Only safe for trusted fixture code. Not for untrusted agent-generated code."
+        ),
+    )
+    parser.add_argument(
+        "--execution-timeout-ms",
+        dest="execution_timeout_ms",
+        type=int,
+        default=10000,
+        help=(
+            "Docker execution timeout in milliseconds for --execute-generation-artifact "
+            "(default: 10000). The default 10000ms accounts for Docker cold-start overhead; "
+            "1000ms is too short and will cause spurious timeouts."
         ),
     )
     parser.add_argument(
@@ -260,10 +353,35 @@ def main(argv: list[str] | None = None) -> None:
         help="Max tokens per generation (default: 1024).",
     )
     args = parser.parse_args(argv)
+
+    # Mutual exclusion validation
+    active = []
+    if args.dry_run:
+        active.append("--dry-run")
+    if args.generate:
+        active.append("--generate")
+    if args.execute_generation_artifact is not None:
+        active.append("--execute-generation-artifact")
+    if len(active) > 1:
+        parser.error(
+            f"Modes are mutually exclusive: {' and '.join(active)} cannot be combined."
+        )
+
+    # --benchmark required unless --execute-generation-artifact is used
+    if args.execute_generation_artifact is None and args.benchmark is None:
+        parser.error(
+            "--benchmark is required. Supported: "
+            + ", ".join(list_benchmarks())
+            + ". (--benchmark is optional only when --execute-generation-artifact is used)"
+        )
+
     result = run(
         benchmark=args.benchmark,
         dry_run_mode=args.dry_run,
         generate_mode=args.generate,
+        execute_generation_artifact_path=args.execute_generation_artifact,
+        execute_local=args.execute_local,
+        execution_timeout_ms=args.execution_timeout_ms,
         limit=args.limit,
         model_name=args.model_name,
         temperature=args.temperature,

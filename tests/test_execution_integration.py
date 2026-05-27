@@ -391,6 +391,67 @@ class TestNoSecrets:
         assert ".env" not in content
 
 
+# ── 8. timeout_ms forwarding ─────────────────────────────────────────────────
+
+class _CapturingBackend:
+    """Records the timeout_ms passed to run_python, succeeds unconditionally."""
+
+    def __init__(self):
+        self.last_timeout_ms: int | None = None
+
+    def run_python(self, source_code: str, timeout_ms: int) -> DockerBackendResult:
+        self.last_timeout_ms = timeout_ms
+        return DockerBackendResult(
+            exit_code=0, stdout="", stderr="", timed_out=False, execution_time_ms=5
+        )
+
+
+class TestTimeoutMs:
+    def test_default_timeout_ms_is_10000(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        backend = _CapturingBackend()
+        execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=backend,
+        )
+        assert backend.last_timeout_ms == 10000
+
+    def test_custom_timeout_ms_forwarded(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        backend = _CapturingBackend()
+        execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=backend,
+            timeout_ms=15000,
+        )
+        assert backend.last_timeout_ms == 15000
+
+    def test_timeout_ms_1000_forwarded(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        backend = _CapturingBackend()
+        execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=backend,
+            timeout_ms=1000,
+        )
+        assert backend.last_timeout_ms == 1000
+
+    def test_timeout_ms_in_execution_input(self, tmp_path):
+        """timeout_ms must reach ExecutionInput (verified via backend call)."""
+        path = _write_gen_artifact(tmp_path)
+        backend = _CapturingBackend()
+        execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=backend,
+            timeout_ms=8000,
+        )
+        assert backend.last_timeout_ms == 8000
+
+
 # ── 7. No forbidden imports in integration.py ─────────────────────────────────
 
 def _collect_imports(src: str) -> set[str]:

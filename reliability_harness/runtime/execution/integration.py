@@ -51,6 +51,7 @@ def execute_generation_artifact(
     output_root: Optional[Path] = None,
     backend: Any = None,
     use_docker: bool = True,
+    timeout_ms: int = 10000,
 ) -> dict[str, Any]:
     """Load a generation artifact, execute its code, and write an execution artifact.
 
@@ -143,6 +144,7 @@ def execute_generation_artifact(
         task_id=task_id,
         candidate_code=extracted_code,
         tests=task.tests,
+        timeout_ms=timeout_ms,
         docker_used=use_docker,
         source_generation_artifact=str(path),
     )

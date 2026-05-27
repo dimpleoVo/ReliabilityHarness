@@ -28,7 +28,76 @@ Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
 ---
 
-## Benchmark-4C: Generation-to-Execution Integration Helper
+## Benchmark-4C.2a: run_benchmark Execution Entrypoint
+
+**Status:** Implemented.
+
+**Scope:** `run_benchmark.py` now supports `--execute-generation-artifact` for single per-task
+generation artifact execution. Wires the `--execute-generation-artifact` flag to
+`execute_generation_artifact()` from Benchmark-4C.1.  
+**Not in scope:** CLI forwarding (`cli.py` unchanged — Benchmark-4C.2b), directory/manifest/batch
+execution, generate+execute one-command pipeline, retry, memory, process metrics.
+
+| Component | File | Status |
+|---|---|---|
+| Execution entrypoint | `reliability_harness/experiments/run_benchmark.py` | Done |
+| Entrypoint tests | `tests/test_benchmark_execution_entrypoint.py` | Done |
+
+**Target commands:**
+
+```bash
+# Without --benchmark (benchmark is read from the artifact JSON)
+python -m reliability_harness.experiments.run_benchmark \
+  --execute-generation-artifact outputs/predictions/<run_id>/tiny_001.json
+
+# With explicit timeout (default 10000ms covers Docker cold-start; 1000ms is too short)
+python -m reliability_harness.experiments.run_benchmark \
+  --execute-generation-artifact outputs/predictions/<run_id>/tiny_001.json \
+  --execution-timeout-ms 10000
+
+# With --benchmark (optional, for explicitness)
+python -m reliability_harness.experiments.run_benchmark \
+  --benchmark tiny \
+  --execute-generation-artifact outputs/predictions/<run_id>/tiny_001.json
+
+# Use local runner (trusted fixture code only, no Docker daemon required)
+python -m reliability_harness.experiments.run_benchmark \
+  --execute-generation-artifact outputs/predictions/<run_id>/tiny_001.json \
+  --execute-local
+```
+
+**Benchmark-4C.2a boundaries:**
+- Input must be a single per-task generation artifact JSON (produced by `--generate`).
+- Default runner is Docker (`use_docker=True`). `--execute-local` overrides to local runner.
+  Local runner is only safe for trusted fixture code.
+- Default Docker execution timeout is **10000ms** (`--execution-timeout-ms 10000`).
+  The `ExecutionInput` contract default of 1000ms is too short for Docker cold start and will
+  cause spurious `timed_out: true` results. Always use ≥ 5000ms for Docker.
+- `--execute-generation-artifact` is mutually exclusive with `--dry-run` and `--generate`.
+- No directory execution, no manifest/batch execution, no generate+execute pipeline.
+- No retry, memory, or process reliability metrics.
+- `cli.py` is unchanged — CLI forwarding is Benchmark-4C.2b.
+- Execution artifacts are written to `outputs/executions/` (covered by `.gitignore`).
+
+**Timeout flag:**
+
+| Flag | Default | Notes |
+|---|---|---|
+| `--execution-timeout-ms N` | `10000` | Docker execution timeout per task. 1000ms causes cold-start timeouts. |
+
+**Mode mutual exclusion:**
+
+| Combination | Result |
+|---|---|
+| `--execute-generation-artifact` alone | OK |
+| `--benchmark tiny --execute-generation-artifact` | OK |
+| `--execute-generation-artifact --execute-local` | OK (local runner) |
+| `--dry-run --execute-generation-artifact` | Error: mutually exclusive |
+| `--generate --execute-generation-artifact` | Error: mutually exclusive |
+
+---
+
+## Benchmark-4C.1: Generation-to-Execution Integration Helper
 
 **Status:** Benchmark-4C.1 implemented (integration helper only — no CLI wiring).
 
