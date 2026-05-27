@@ -271,6 +271,41 @@ All paths resolved via `reliability_harness.utils.paths` — no `os.getcwd()` de
 
 ---
 
+## Migration-4I: Move legacy ReActX docs/examples to docs/legacy (completed)
+
+**Branch:** `migration/reliability-harness-structure`
+
+### What Migration-4I completes
+
+1. Creates `docs/legacy/examples/` and moves 4 historical example JSON files from `ReActX/docs/examples/`:
+   - `example_run_artifact.json`
+   - `example_benchmark_result.json`
+   - `example_trajectory_analysis.json`
+   - `example_reflection_evaluation.json`
+2. Moves `ReActX/docs/INTERVIEW_NARRATIVE.md` → `docs/legacy/INTERVIEW_NARRATIVE.md`.
+3. Moves `ReActX/docs/fake_complexity_audit.md` → `docs/legacy/fake_complexity_audit.md`.
+4. Moves `old.md` (repo root) → `docs/legacy/old_reactx_evalforge_readme.md`.
+5. Adds `docs/legacy/README.md` explaining all materials in that directory are historical and not paper results.
+6. Updates `README.md`: "Reliability Evidence Examples" → "Legacy Reliability Evidence Examples"; all links updated from `ReActX/docs/*` to `docs/legacy/*`; adds historical disclaimer and TODO for future official examples.
+7. Updates `docs/ARCHITECTURE.md`: adds "Docs Layout" section documenting `docs/legacy/` and its purpose.
+8. Updates `docs/BENCHMARK_ENTRYPOINT.md`: adds "Official Benchmark Artifacts" section clarifying where current outputs are written and that `docs/legacy/examples/` is historical only.
+
+### What Migration-4I does NOT change
+
+- `reliability_harness/` — no code changes.
+- `tests/` — not touched.
+- `scripts/` — not touched.
+- `docker/` — not touched.
+- `data/` / `outputs/` — not touched.
+- `ReActX/app/`, `ReActX/evalforge/` — not deleted.
+- `reactx_failure_memory` Chroma collection — not touched.
+- `REACTX_DATASET_PATH` deprecated alias — not touched.
+- All evaluation, agent, retry, reflection, memory logic — unchanged.
+- Benchmark skeleton — unchanged.
+- JSON content of moved example files — unchanged (historical snapshots preserved as-is).
+
+---
+
 ## Migration-2B-2: Physical data migration (next)
 
 Planned scope:

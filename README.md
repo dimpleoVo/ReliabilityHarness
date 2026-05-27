@@ -220,13 +220,17 @@ Reliability Report  (reliability_harness.reporting)
 
 ---
 
-## Reliability Evidence Examples
+## Legacy Reliability Evidence Examples
 
-- [Run Artifact Example](ReActX/docs/examples/example_run_artifact.json)
-- [Benchmark Result Example](ReActX/docs/examples/example_benchmark_result.json)
-- [Trajectory Analysis Example](ReActX/docs/examples/example_trajectory_analysis.json)
-- [Reflection Evaluation Example](ReActX/docs/examples/example_reflection_evaluation.json)
-- [Interview Narrative](ReActX/docs/INTERVIEW_NARRATIVE.md)
+> **Historical reference only.** These are ReActX-era snapshots and are **not** current ReliabilityHarness paper results. Schema and metrics predate the current `reliability_harness` evaluation pipeline.
+
+- [Run Artifact Snapshot (legacy)](docs/legacy/examples/example_run_artifact.json)
+- [Benchmark Result Snapshot (legacy)](docs/legacy/examples/example_benchmark_result.json)
+- [Trajectory Analysis Snapshot (legacy)](docs/legacy/examples/example_trajectory_analysis.json)
+- [Reflection Evaluation Snapshot (legacy)](docs/legacy/examples/example_reflection_evaluation.json)
+- [ReActX Prototype Narrative (legacy)](docs/legacy/INTERVIEW_NARRATIVE.md)
+
+**TODO:** Current ReliabilityHarness examples will be generated from future benchmark runs under `outputs/runs/` and `outputs/reports/` and documented separately.
 
 ---
 
