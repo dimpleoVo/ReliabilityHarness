@@ -2,7 +2,7 @@ import time
 from reliability_harness.runtime.agent.trajectory import Trajectory, Step
 
 
-class ReActXAgent:
+class ReliabilityHarnessAgent:
     def __init__(self, tools):
         self.tools = tools
 
@@ -58,3 +58,7 @@ class ReActXAgent:
         traj.set_final_answer(observation)
 
         return traj
+
+
+# Deprecated compatibility alias for legacy ReActX imports.
+ReActXAgent = ReliabilityHarnessAgent

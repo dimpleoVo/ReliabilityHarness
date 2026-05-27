@@ -1,4 +1,4 @@
-from reliability_harness.runtime.agent.react_agent import ReActXAgent
+from reliability_harness.runtime.agent.react_agent import ReliabilityHarnessAgent
 from reliability_harness.runtime.loop.tool_reliability import compute_tool_reliability
 from reliability_harness.runtime.loop.retry_effectiveness import compute_retry_effectiveness
 from reliability_harness.runtime.loop.coding_metrics import compute_coding_execution_metrics
@@ -180,9 +180,9 @@ Fix the logic and return ONLY valid Python code.
 
 
 # ===============================
-# 🔥 EvalForge + LLM Judge（核心）
+# 🔥 ReliabilityHarness evaluation + LLM Judge（核心）
 # ===============================
-def run_evalforge(traj_dict):
+def run_reliability_evaluation(traj_dict):
     print("\n[ReliabilityHarness Eval] evaluating...")
 
     sample = trajectory_to_eval_sample(traj_dict)
@@ -234,6 +234,10 @@ def run_evalforge(traj_dict):
     }
 
 
+# Deprecated compatibility alias for legacy EvalForge-style calls.
+run_evalforge = run_reliability_evaluation
+
+
 # ===============================
 # 🔥 Memory 保存
 # ===============================
@@ -253,7 +257,7 @@ def save_memory_if_improved(task, trajectory_all, memory_store, vector_store):
         return False
 
     # Gate 2: retry sandbox must NOT have runtime_error (read from traj, not eval_result,
-    # because run_evalforge hardcodes runtime_error=False in the LLM-judge branch)
+    # because the reliability evaluation branch currently hardcodes runtime_error=False in the LLM-judge branch)
     traj2 = trajectory_all[-1]["traj"]
     step2 = traj2["steps"][-1]
     sandbox2 = step2.get("sandbox", {})
@@ -391,7 +395,7 @@ def run_closed_loop(task):
         "code_executor": CodeExecutionTool()
     }
 
-    agent = ReActXAgent(tools)
+    agent = ReliabilityHarnessAgent(tools)
 
     memory_store = FailureMemoryStore()
     vector_store = FailureMemoryVectorStore()
@@ -442,7 +446,7 @@ def run_closed_loop(task):
         print("\n[Trajectory]")
         print(traj_dict)
 
-        eval_result = run_evalforge(traj_dict)
+        eval_result = run_reliability_evaluation(traj_dict)
 
         print("\n[Eval Result]")
         print(eval_result)
