@@ -123,3 +123,6 @@ __pycache__/
 !outputs/benchmark_results/.gitkeep
 outputs/benchmark_results/*.json
 !outputs/benchmark_results/.gitkeep
+# Private dissertation / paper notes
+
+dissertation_data/
