@@ -138,7 +138,7 @@ Environment variable overrides (in priority order):
 |---|---|
 | `RELIABILITY_HARNESS_DATASET_PATH` | Primary dataset path override |
 | `DATASET_PATH` | Secondary dataset path override |
-| `REACTX_DATASET_PATH` | Legacy fallback (kept for backwards compat) |
+| `REACTX_DATASET_PATH` | Deprecated explicit alias — only used when explicitly set; does **not** auto-fallback to `ReActX/data/` |
 
 See `.env.example` for a full template.
 

@@ -3,14 +3,10 @@ import os
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
-from reliability_harness.utils.paths import DATA_ROOT, TASKS_ROOT, LEGACY_REACTX_ROOT
+from reliability_harness.utils.paths import DATA_ROOT, TASKS_ROOT
 
-# Canonical task file names
+# Canonical task file name
 _TASKS_FILE = "reliability_tasks.json"
-_LEGACY_TASKS_FILE = "reactx_closed_loop_tasks.json"
-
-# Legacy Docker fallback — /app is repo root mount, data still under ReActX/; remove in Migration-3
-_LEGACY_DOCKER_PATH = Path("/app/ReActX") / "data" / "tasks" / _LEGACY_TASKS_FILE
 
 
 def _resolve_dataset_path() -> Path:
@@ -26,23 +22,14 @@ def _resolve_dataset_path() -> Path:
     if env:
         candidates.append(Path(env))
 
-    # 3. REACTX_DATASET_PATH — legacy env fallback
+    # 3. REACTX_DATASET_PATH — deprecated explicit alias; only used when explicitly set by user
     env = os.environ.get("REACTX_DATASET_PATH")
     if env:
         candidates.append(Path(env))
 
-    # 4–5. Canonical data/ paths (preferred once data/ is populated)
+    # 4–5. Canonical data/ paths
     candidates.append(DATA_ROOT / _TASKS_FILE)
     candidates.append(TASKS_ROOT / _TASKS_FILE)
-
-    # 6–8. Legacy ReActX/ paths — kept until Migration-3 moves data/
-    candidates.append(TASKS_ROOT / _LEGACY_TASKS_FILE)
-    candidates.append(LEGACY_REACTX_ROOT / "data" / _TASKS_FILE)
-    candidates.append(LEGACY_REACTX_ROOT / "data" / _LEGACY_TASKS_FILE)
-    candidates.append(LEGACY_REACTX_ROOT / "data" / "tasks" / _LEGACY_TASKS_FILE)
-
-    # 9. Legacy Docker path — to be removed in Migration-3
-    candidates.append(_LEGACY_DOCKER_PATH)
 
     for p in candidates:
         if p.exists():
@@ -50,7 +37,12 @@ def _resolve_dataset_path() -> Path:
 
     tried = [str(p) for p in candidates]
     raise FileNotFoundError(
-        f"Dataset not found. Tried:\n" + "\n".join(f"  {p}" for p in tried)
+        "Dataset not found. Tried:\n"
+        + "\n".join(f"  {p}" for p in tried)
+        + "\n\nTo fix, either:\n"
+        + "  - Set RELIABILITY_HARNESS_DATASET_PATH=/path/to/reliability_tasks.json\n"
+        + "  - Set DATASET_PATH=/path/to/reliability_tasks.json\n"
+        + "  - Place tasks at data/tasks/reliability_tasks.json"
     )
 
 

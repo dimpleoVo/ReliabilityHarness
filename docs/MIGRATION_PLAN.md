@@ -220,6 +220,34 @@ All paths resolved via `reliability_harness.utils.paths` — no `os.getcwd()` de
 
 ---
 
+## Migration-4G: Remove implicit ReActX/data fallback from dataset loading (completed)
+
+**Branch:** `migration/reliability-harness-structure`
+
+### What Migration-4G completes
+
+1. Rewrites `reliability_harness/utils/dataset_loader.py`:
+   - Removes `LEGACY_REACTX_ROOT` import.
+   - Removes `_LEGACY_TASKS_FILE` (`reactx_closed_loop_tasks.json`).
+   - Removes `_LEGACY_DOCKER_PATH` (`/app/ReActX`).
+   - Removes all `candidates.append(LEGACY_REACTX_ROOT / ...)` fallback entries.
+   - Candidate chain is now: `RELIABILITY_HARNESS_DATASET_PATH` → `DATASET_PATH` → `REACTX_DATASET_PATH` (explicit only) → `data/reliability_tasks.json` → `data/tasks/reliability_tasks.json`.
+   - `REACTX_DATASET_PATH` is kept as a deprecated explicit alias: only used when user explicitly sets it; does **not** auto-fallback to `ReActX/data/`.
+   - Error message now only suggests canonical paths, not `ReActX/data/`.
+2. Updates `README.md`: clarifies `REACTX_DATASET_PATH` as deprecated explicit alias, not auto-fallback.
+3. Updates `.env.example`: clarifies `REACTX_DATASET_PATH` comment accordingly.
+
+### What Migration-4G does NOT change
+
+- `reliability_harness/utils/paths.py` — `LEGACY_REACTX_ROOT` constant remains (still used by other consumers if any; its removal is Migration-3).
+- `reactx_failure_memory` Chroma collection name.
+- `ReActX/` directory contents.
+- `app/` and `evalforge/` shims.
+- All evaluation, agent, retry, reflection, memory logic.
+- Benchmark skeleton.
+
+---
+
 ## Migration-2B-2: Physical data migration (next)
 
 Planned scope:
@@ -227,8 +255,8 @@ Planned scope:
 - Copy `ReActX/data/reliability_tasks.json` if present → `data/`.
 - Move host `chroma_db_data/` content → `data/chroma_db_data/` (after service stop).
 - Move `ReActX/benchmark_results/` → `outputs/benchmark_results/` (historical data).
-- After copy verified: remove legacy fallback paths from `dataset_loader.py`.
-- Update `REACTX_DATASET_PATH` references to use new name.
+- After copy verified: remove `REACTX_DATASET_PATH` deprecated alias from `dataset_loader.py`.
+- Remove `LEGACY_REACTX_ROOT` from `paths.py` once no consumers remain.
 
 Each phase must be committed separately.
 
