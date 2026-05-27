@@ -173,6 +173,29 @@ All paths resolved via `reliability_harness.utils.paths` — no `os.getcwd()` de
 
 ---
 
+## Migration-4C: Split official tests from legacy ReActX tests (completed)
+
+**Branch:** `migration/reliability-harness-structure`
+
+### What Migration-4C completes
+
+1. Rewrites `scripts/run_tests.sh`: now runs only root-level `tests/` via pytest. No `PYTHONPATH=ReActX`. No call to `ReActX/run_tests.py`. Official ReliabilityHarness test entrypoint.
+2. Creates `scripts/legacy/run_reactx_tests.sh`: isolated legacy runner for old ReActX tests. Prints a visible WARNING banner clarifying legacy status. Contains the `PYTHONPATH=ReActX` and `cd ReActX && python run_tests.py` logic moved out of the official script.
+3. Updates `README.md`: Quick Start test command is `bash scripts/run_tests.sh`. Legacy table updated to reference `scripts/legacy/run_reactx_tests.sh`.
+4. Updates `docs/BENCHMARK_ENTRYPOINT.md`: documents `bash scripts/run_tests.sh` as official test entrypoint; documents `scripts/legacy/run_reactx_tests.sh` as legacy-only.
+5. Updates `docs/ARCHITECTURE.md`: adds "Test Layer" section clearly separating authoritative `tests/` from legacy `ReActX/test_*.py`; updates migration status table.
+
+### What Migration-4C does NOT change
+
+- No evaluation semantics, agent logic, retry/reflection/memory behavior.
+- No business logic in any module.
+- `ReActX/` directory, `ReActX/test_*.py`, `ReActX/run_tests.py` — not deleted, not moved.
+- `app/` and `evalforge/` shims — not deleted.
+- No MBPP/HumanEval data loading.
+- No git add / commit / push.
+
+---
+
 ## Migration-2B-2: Physical data migration (next)
 
 Planned scope:

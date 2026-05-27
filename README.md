@@ -58,8 +58,8 @@ bash scripts/run_benchmark_dry_run.sh humaneval
 python -m reliability_harness.experiments.run_benchmark --benchmark mbpp --dry-run
 python -m reliability_harness.experiments.run_benchmark --benchmark humaneval --dry-run
 
-# Run new root-level benchmark tests (Migration-4A/B)
-python -m pytest tests/test_benchmark_entrypoint.py tests/test_benchmark_registry.py tests/test_benchmark_task_schema.py
+# Run official ReliabilityHarness root tests (authoritative — no ReActX)
+bash scripts/run_tests.sh
 
 # Show package info
 python -m reliability_harness.cli info
@@ -108,7 +108,7 @@ python -m reliability_harness.cli benchmark --benchmark mbpp --dry-run
 | `ReActX/evaluate.py` | **Deprecated** | Legacy EvalForge runner |
 | `run_eval.py` | **Legacy** | EvalForge-style; outputs not canonical for paper |
 | `scripts/run_benchmark_mock.sh` | **Legacy** | Calls run_eval.py (EvalForge-era); use `run_benchmark_dry_run.sh` instead |
-| `ReActX/test_*.py` | **Legacy smoke tests** | Not constraints on new architecture; root `tests/` supersedes these |
+| `ReActX/test_*.py` | **Legacy smoke tests** | Not constraints on new architecture; root `tests/` supersedes these. Manual legacy runs via `scripts/legacy/run_reactx_tests.sh` |
 | `ReActX/benchmark_results/` | **Historical data** | Not paper results; not to be cited |
 | `ReActX/runs/` | **Historical data** | Not paper results |
 | `ReActX/reports/` | **Historical data** | Not paper results |

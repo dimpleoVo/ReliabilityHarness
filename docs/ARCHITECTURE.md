@@ -146,7 +146,8 @@ Supported benchmarks: `mbpp`, `humaneval`
 | Migration-2A: Docker / runtime path stabilization | Completed |
 | Migration-2B-1: Unified data/output paths | Completed |
 | Benchmark-0: Benchmark adapter skeleton + experiment entrypoint | Completed |
-| **Migration-4A/B: Official entrypoint cleanup + root tests** | **In progress** |
+| Migration-4A/B: Official entrypoint cleanup + root tests | Completed |
+| **Migration-4C: Split official tests from legacy ReActX tests** | **Completed** |
 | Migration-2B-2: Physical data migration | Planned |
 | Migration-3: Test migration and legacy cleanup | Planned |
 | Migration-4 (full): MBPP/HumanEval adapter implementation | Planned |
@@ -154,7 +155,34 @@ Supported benchmarks: `mbpp`, `humaneval`
 **Migration-4A/B adds:**
 - `scripts/run_benchmark_dry_run.sh` — official shell entrypoint for dry-run validation.
 - `tests/test_benchmark_entrypoint.py`, `tests/test_benchmark_registry.py`, `tests/test_benchmark_task_schema.py` — root-level tests that are the authoritative constraints on the Benchmark-0 skeleton. These supersede `ReActX/test_*.py` for new-architecture concerns.
+
+**Migration-4C adds:**
+- `scripts/run_tests.sh` now runs only root-level `tests/` — no `ReActX/run_tests.py`, no `PYTHONPATH=ReActX`.
+- `scripts/legacy/run_reactx_tests.sh` — isolated legacy runner for old ReActX tests; not a primary entrypoint.
 - `ReActX/test_*.py` are preserved but are NOT constraints on `reliability_harness.*` behavior.
+
+---
+
+## Test Layer
+
+**Authoritative tests:** `tests/` (repo root)
+
+```bash
+bash scripts/run_tests.sh   # official entrypoint — runs tests/ only
+```
+
+- `tests/test_benchmark_entrypoint.py` — validates `run_benchmark` dry-run and `NotImplementedError` for full run.
+- `tests/test_benchmark_registry.py` — validates adapter registry dispatch and error handling.
+- `tests/test_benchmark_task_schema.py` — validates `BenchmarkTask` fields, defaults, and serialization roundtrip.
+
+All root tests import only `reliability_harness.*`. No LLM calls, no Docker, no real benchmark data.
+
+**Legacy tests:** `ReActX/test_*.py`
+
+- Run manually via `scripts/legacy/run_reactx_tests.sh`.
+- NOT part of the paper benchmark path.
+- NOT constraints on `reliability_harness.*` architecture.
+- Preserved for historical reference; will be retired in Migration-3.
 
 ---
 

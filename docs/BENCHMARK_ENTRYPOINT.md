@@ -101,11 +101,16 @@ All paths are resolved from repo root via `reliability_harness.utils.paths` — 
 | `ReActX/runs/` | **Historical data** | Not paper results |
 | `ReActX/reports/` | **Historical data** | Not paper results |
 
-## Root-level Tests (Migration-4A/B, Authoritative)
+## Root-level Tests (Migration-4A/B + 4C, Authoritative)
 
-The following root-level tests are the authoritative constraints on the Benchmark-0 skeleton:
+Official benchmark skeleton tests live in `tests/` (repo root). These are the
+authoritative constraints on the Benchmark-0 skeleton.
 
 ```bash
+# Official test entrypoint (Migration-4C)
+bash scripts/run_tests.sh
+
+# Or run specific files directly
 python -m pytest tests/test_benchmark_entrypoint.py
 python -m pytest tests/test_benchmark_registry.py
 python -m pytest tests/test_benchmark_task_schema.py
@@ -114,7 +119,11 @@ python -m pytest tests/test_benchmark_task_schema.py
 These tests:
 - Only import `reliability_harness.*`.
 - Do not call LLMs, Docker, or load real benchmark data.
-- Replace `ReActX/test_*.py` as new-architecture constraints.
+- Supersede `ReActX/test_*.py` as new-architecture constraints.
+
+`ReActX/test_*.py` tests are legacy migration checks only. They are NOT
+acceptance criteria for the paper benchmark path. Manual legacy runs are
+available via `scripts/legacy/run_reactx_tests.sh`.
 
 ---
 
