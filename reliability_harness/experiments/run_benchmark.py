@@ -12,7 +12,11 @@ Dry-run (validate pipeline skeleton, no data loading, no LLM calls):
     python -m reliability_harness.experiments.run_benchmark --benchmark mbpp --dry-run
     python -m reliability_harness.experiments.run_benchmark --benchmark humaneval --dry-run
 
-Full run (not yet implemented — MBPP/HumanEval loading coming next phase):
+Generation mode (Benchmark-3 — LLM candidate generation, no execution):
+    python -m reliability_harness.experiments.run_benchmark --benchmark tiny --generate
+    python -m reliability_harness.experiments.run_benchmark --benchmark tiny --generate --limit 1 --model-name deepseek-chat
+
+Full run (not yet implemented — process evaluation coming next phase):
     python -m reliability_harness.experiments.run_benchmark --benchmark mbpp
 
 Pipeline (once fully implemented)
@@ -33,6 +37,7 @@ Path policy
 - Run artifacts:        outputs/runs/
 - Reliability reports:  outputs/reports/
 - Benchmark summaries:  outputs/benchmark_results/
+- Generation outputs:   outputs/predictions/{run_id}/
 """
 from __future__ import annotations
 
@@ -53,19 +58,23 @@ from reliability_harness.utils.paths import (
 
 
 def dry_run(benchmark: str) -> dict[str, Any]:
-    """Return the pipeline manifest without loading any data or running experiments.
+    """Return the pipeline manifest without calling LLMs, Docker, memory, or executing code.
 
-    For benchmarks with a loadable fixture (e.g. tiny), also writes the manifest
-    to outputs/benchmark_results/<benchmark>_dry_run.json and adds a
+    All registered benchmarks (tiny, mbpp, humaneval) are fixture-backed and load
+    tasks from local JSON files under data/fixtures/. dry_run() loads tasks only to
+    report num_tasks; it does not run agents, sandboxes, or any external services.
+
+    For fixture-backed benchmarks, also writes the manifest to
+    outputs/benchmark_results/<benchmark>_dry_run.json and adds a
     dry_run_artifact field to the returned dict.
 
-    For skeleton adapters (mbpp, humaneval) that raise NotImplementedError on
-    load_tasks(), no file is written.
+    If a future adapter raises NotImplementedError on load_tasks(), num_tasks is
+    reported as None and no artifact file is written.
     """
     adapter = get_adapter(benchmark)
 
-    # Try to load tasks — succeeds for fixture-backed adapters (tiny),
-    # raises NotImplementedError for skeleton adapters (mbpp, humaneval).
+    # Load tasks from local fixture to report num_tasks.
+    # Fixture-backed adapters (tiny, mbpp, humaneval) always succeed here.
     try:
         tasks = adapter.load_tasks()
         num_tasks = len(tasks)
@@ -108,9 +117,41 @@ def dry_run(benchmark: str) -> dict[str, Any]:
     return manifest
 
 
+def _execute_generate(
+    benchmark: str,
+    limit: int | None,
+    model_name: str,
+    temperature: float,
+    max_tokens: int,
+) -> dict[str, Any]:
+    """Run generation-only LLM candidate generation (Benchmark-3).
+
+    Deferred imports ensure the dry-run path never imports LLMClient or
+    triggers load_dotenv(). Requires DEEPSEEK_API_KEY in environment or .env.
+    """
+    # Deferred: dry-run must never reach this function
+    from reliability_harness.runtime.generation.generator import generate_for_tasks
+    from reliability_harness.runtime.generation.llm_client import LLMClient
+
+    adapter = get_adapter(benchmark)
+    tasks = adapter.load_tasks(limit=limit)
+    llm_client = LLMClient.from_env(
+        model_name=model_name,
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
+    return generate_for_tasks(
+        tasks=tasks,
+        llm_client=llm_client,
+        model_name=model_name,
+        limit=None,
+    )
+
+
 def run(
     benchmark: str,
     dry_run_mode: bool = False,
+    generate_mode: bool = False,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Main benchmark run entry point.
@@ -118,24 +159,36 @@ def run(
     Parameters
     ----------
     benchmark:
-        Benchmark name, e.g. "mbpp" or "humaneval".
+        Benchmark name, e.g. "mbpp", "humaneval", or "tiny".
     dry_run_mode:
-        If True, return the pipeline manifest without loading data.
+        If True, return the pipeline manifest without loading data or calling LLMs.
+    generate_mode:
+        If True, run Benchmark-3 generation-only LLM candidate generation.
+        Requires DEEPSEEK_API_KEY. Does not execute generated code.
     **kwargs:
-        Reserved for future options (split, limit, output_dir, etc.).
+        Options forwarded to generation mode: limit, model_name, temperature, max_tokens.
 
     Returns
     -------
     dict
-        Dry-run manifest or future run summary.
+        Dry-run manifest, generation manifest, or future run summary.
 
     Raises
     ------
     NotImplementedError
-        When dry_run_mode is False (full execution not yet implemented).
+        When neither dry_run_mode nor generate_mode is True.
     """
     if dry_run_mode:
         return dry_run(benchmark)
+
+    if generate_mode:
+        return _execute_generate(
+            benchmark=benchmark,
+            limit=kwargs.get("limit"),
+            model_name=str(kwargs.get("model_name", "deepseek-chat")),
+            temperature=float(kwargs.get("temperature", 0.0)),
+            max_tokens=int(kwargs.get("max_tokens", 1024)),
+        )
 
     raise NotImplementedError(
         f"Full execution for benchmark={benchmark!r} is not yet implemented. "
@@ -149,7 +202,8 @@ def main(argv: list[str] | None = None) -> None:
         prog="python -m reliability_harness.experiments.run_benchmark",
         description=(
             "ReliabilityHarness paper benchmark runner. "
-            "Use --dry-run to validate the pipeline skeleton."
+            "Use --dry-run to validate the pipeline skeleton. "
+            "Use --generate for Benchmark-3 generation-only LLM candidate generation."
         ),
     )
     parser.add_argument(
@@ -164,12 +218,57 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         default=False,
         help=(
-            "Print the pipeline skeleton manifest without loading data, "
-            "calling LLMs, or writing outputs."
+            "Print the pipeline skeleton manifest. Does not call LLMs, Docker, "
+            "memory, or execute code. For fixture-backed benchmarks (tiny, mbpp, "
+            "humaneval), writes a dry-run manifest to outputs/benchmark_results/."
         ),
     )
+    parser.add_argument(
+        "--generate",
+        action="store_true",
+        default=False,
+        help=(
+            "Run Benchmark-3 generation-only LLM candidate generation. "
+            "Requires DEEPSEEK_API_KEY in .env or environment. "
+            "Does not execute generated code."
+        ),
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Limit generation to the first N tasks.",
+    )
+    parser.add_argument(
+        "--model-name",
+        dest="model_name",
+        default="deepseek-chat",
+        help="LLM model name (default: deepseek-chat).",
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.0,
+        help="Sampling temperature (default: 0.0).",
+    )
+    parser.add_argument(
+        "--max-tokens",
+        dest="max_tokens",
+        type=int,
+        default=1024,
+        help="Max tokens per generation (default: 1024).",
+    )
     args = parser.parse_args(argv)
-    result = run(benchmark=args.benchmark, dry_run_mode=args.dry_run)
+    result = run(
+        benchmark=args.benchmark,
+        dry_run_mode=args.dry_run,
+        generate_mode=args.generate,
+        limit=args.limit,
+        model_name=args.model_name,
+        temperature=args.temperature,
+        max_tokens=args.max_tokens,
+    )
     print(json.dumps(result, indent=2))
 
 

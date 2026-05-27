@@ -119,6 +119,7 @@ __pycache__/
 !outputs/reports/.gitkeep
 !outputs/predictions/
 !outputs/predictions/.gitkeep
+outputs/predictions/*/
 !outputs/benchmark_results/
 !outputs/benchmark_results/.gitkeep
 outputs/benchmark_results/*.json

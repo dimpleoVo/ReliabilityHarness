@@ -5,6 +5,7 @@ Usage:
     python -m reliability_harness.cli paths
     python -m reliability_harness.cli benchmark --benchmark mbpp --dry-run
     python -m reliability_harness.cli benchmark --benchmark humaneval --dry-run
+    python -m reliability_harness.cli benchmark --benchmark tiny --generate --limit 1 --model-name deepseek-chat
 """
 import argparse
 import json
@@ -59,9 +60,16 @@ def cmd_paths(_args: argparse.Namespace) -> None:
 
 def cmd_benchmark(args: argparse.Namespace) -> None:
     from reliability_harness.experiments.run_benchmark import run
-    from reliability_harness.benchmarks.registry import list_benchmarks
 
-    result = run(benchmark=args.benchmark, dry_run_mode=args.dry_run)
+    result = run(
+        benchmark=args.benchmark,
+        dry_run_mode=args.dry_run,
+        generate_mode=getattr(args, "generate", False),
+        limit=getattr(args, "limit", None),
+        model_name=getattr(args, "model_name", "deepseek-chat"),
+        temperature=getattr(args, "temperature", 0.0),
+        max_tokens=getattr(args, "max_tokens", 1024),
+    )
     print(json.dumps(result, indent=2))
 
 
@@ -75,7 +83,7 @@ def main() -> None:
     sub.add_parser("paths", help="Show resolved filesystem paths")
 
     from reliability_harness.benchmarks.registry import list_benchmarks
-    bm = sub.add_parser("benchmark", help="Run benchmark dry-run skeleton")
+    bm = sub.add_parser("benchmark", help="Run benchmark dry-run or generation")
     bm.add_argument(
         "--benchmark",
         required=True,
@@ -88,6 +96,38 @@ def main() -> None:
         action="store_true",
         default=False,
         help="Print pipeline skeleton without loading data or running experiments",
+    )
+    bm.add_argument(
+        "--generate",
+        action="store_true",
+        default=False,
+        help="Run Benchmark-3 generation-only LLM candidate generation (requires DEEPSEEK_API_KEY)",
+    )
+    bm.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Limit generation to the first N tasks",
+    )
+    bm.add_argument(
+        "--model-name",
+        dest="model_name",
+        default="deepseek-chat",
+        help="LLM model name for generation (default: deepseek-chat)",
+    )
+    bm.add_argument(
+        "--temperature",
+        type=float,
+        default=0.0,
+        help="Sampling temperature (default: 0.0)",
+    )
+    bm.add_argument(
+        "--max-tokens",
+        dest="max_tokens",
+        type=int,
+        default=1024,
+        help="Max tokens per generation (default: 1024)",
     )
 
     args = parser.parse_args()

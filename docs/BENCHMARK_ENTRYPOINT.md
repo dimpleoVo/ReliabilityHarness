@@ -22,9 +22,93 @@ python -m reliability_harness.experiments.run_benchmark --benchmark <name> [--dr
 
 Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
-> **Current phase (Benchmark-2):** `tiny`, `mbpp`, and `humaneval` dry-runs are fully
-> functional and each writes an output artifact. Full execution (agent runtime, sandbox)
-> is not yet implemented and will be enabled in a future benchmark phase.
+> **Current phase (Benchmark-3):** `--generate` mode is now available for LLM candidate
+> generation (no code execution, no Docker, no pass/fail evaluation). Full process-aware
+> execution (agent runtime, sandbox, metrics) will be enabled in a future benchmark phase.
+
+---
+
+## Benchmark-3: Generation-Only LLM Candidate Generation
+
+Benchmark-3 adds LLM candidate generation on top of the Benchmark-2 data-loading layer.
+
+**Scope:** prompt building → LLM call → code extraction → generation artifact.  
+**Not in scope:** code execution, Docker, pass/fail evaluation, retry, reflection, memory, process metrics.
+
+**Entrypoints:**
+
+```bash
+# Python module
+python -m reliability_harness.experiments.run_benchmark --benchmark tiny --generate --limit 1
+python -m reliability_harness.experiments.run_benchmark --benchmark mbpp --generate --limit 2 --model-name deepseek-chat
+
+# CLI
+python -m reliability_harness.cli benchmark --benchmark tiny --generate --limit 1
+```
+
+**Options:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--generate` | off | Enable generation mode (requires DEEPSEEK_API_KEY) |
+| `--limit N` | all | Process only the first N tasks |
+| `--model-name` | `deepseek-chat` | LLM model identifier |
+| `--temperature` | `0.0` | Sampling temperature |
+| `--max-tokens` | `1024` | Max tokens per generation |
+
+**Outputs** are written to:
+
+```
+outputs/predictions/{run_id}/manifest.json
+outputs/predictions/{run_id}/{task_id}.json
+```
+
+`run_id` is a timestamp + random suffix, e.g. `20250527_153042_a1b2c3d4`.
+
+**`.env` rules:**
+- `--dry-run` never reads `.env` and never requires `DEEPSEEK_API_KEY`.
+- `--generate` reads `DEEPSEEK_API_KEY` from `.env` or the environment (via `load_dotenv()` called inside `LLMClient.from_env()` only).
+- `.env` is `.gitignore`d — never commit API keys.
+- Artifacts record `model_name` only, never the API key.
+
+**Generation artifact schema** (per-task JSON):
+
+```json
+{
+  "run_id": "...",
+  "benchmark": "tiny",
+  "task_id": "tiny_0",
+  "model_name": "deepseek-chat",
+  "prompt": "...",
+  "raw_response": "...",
+  "extracted_code": "def solve(): ...",
+  "extraction_status": "success",
+  "error": null,
+  "timestamp": "...",
+  "llm_used": true,
+  "docker_used": false,
+  "execution_performed": false
+}
+```
+
+**Manifest schema:**
+
+```json
+{
+  "run_id": "...",
+  "benchmark": "tiny",
+  "model_name": "deepseek-chat",
+  "num_tasks": 2,
+  "artifacts": ["...path/tiny_0.json", "...path/tiny_1.json"],
+  "llm_used": true,
+  "docker_used": false,
+  "execution_performed": false,
+  "timestamp": "..."
+}
+```
+
+> **Benchmark-3 scope:** LLM candidate generation only. No code execution.
+> No Docker. No pass/fail evaluation. No retry/reflection. No memory. No process metrics.
 
 ---
 

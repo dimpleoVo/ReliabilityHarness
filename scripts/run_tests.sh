@@ -25,4 +25,8 @@ python -m pytest \
   tests/test_tiny_fixture_adapter.py \
   tests/test_mbpp_small_adapter.py \
   tests/test_humaneval_small_adapter.py \
+  tests/test_generation_prompt_builder.py \
+  tests/test_generation_code_extractor.py \
+  tests/test_generation_artifact.py \
+  tests/test_generation_mode.py \
   -v
