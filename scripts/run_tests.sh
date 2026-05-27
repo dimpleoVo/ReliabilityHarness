@@ -23,4 +23,6 @@ python -m pytest \
   tests/test_benchmark_task_schema.py \
   tests/test_edit_distance_not_success_gate.py \
   tests/test_tiny_fixture_adapter.py \
+  tests/test_mbpp_small_adapter.py \
+  tests/test_humaneval_small_adapter.py \
   -v

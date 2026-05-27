@@ -1,0 +1,36 @@
+[
+  {
+    "task_id": "mbpp_1",
+    "benchmark": "mbpp",
+    "prompt": "Write a Python function called `add_numbers` that takes two integers a and b, and returns their sum.",
+    "entry_point": "add_numbers",
+    "tests": [
+      "assert add_numbers(1, 2) == 3",
+      "assert add_numbers(0, 5) == 5",
+      "assert add_numbers(-1, 1) == 0"
+    ],
+    "reference_solution": "def add_numbers(a, b):\n    return a + b",
+    "metadata": {
+      "source": "mbpp_small_fixture",
+      "split": "test",
+      "original_task_id": 1
+    }
+  },
+  {
+    "task_id": "mbpp_2",
+    "benchmark": "mbpp",
+    "prompt": "Write a Python function called `is_odd` that takes an integer n and returns True if n is odd, False otherwise.",
+    "entry_point": "is_odd",
+    "tests": [
+      "assert is_odd(1) == True",
+      "assert is_odd(2) == False",
+      "assert is_odd(0) == False"
+    ],
+    "reference_solution": "def is_odd(n):\n    return n % 2 != 0",
+    "metadata": {
+      "source": "mbpp_small_fixture",
+      "split": "test",
+      "original_task_id": 2
+    }
+  }
+]

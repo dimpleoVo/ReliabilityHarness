@@ -124,3 +124,67 @@ class TestTinyDryRun:
         assert result["benchmark"] == "tiny"
         assert result["status"] == "dry-run skeleton"
         assert "dry_run_artifact" in result
+
+
+class TestMBPPFixtureBackedDryRun:
+    def test_mbpp_dry_run_num_tasks_ge_two(self):
+        result = dry_run("mbpp")
+        assert result["num_tasks"] >= 2
+
+    def test_mbpp_dry_run_contains_dry_run_artifact(self):
+        result = dry_run("mbpp")
+        assert "dry_run_artifact" in result
+
+    def test_mbpp_dry_run_artifact_path_ends_correctly(self):
+        result = dry_run("mbpp")
+        assert result["dry_run_artifact"].endswith(
+            os.path.join("benchmark_results", "mbpp_dry_run.json")
+        )
+
+    def test_mbpp_dry_run_artifact_file_exists(self):
+        result = dry_run("mbpp")
+        assert os.path.isfile(result["dry_run_artifact"])
+
+    def test_mbpp_dry_run_artifact_json_benchmark(self):
+        result = dry_run("mbpp")
+        with open(result["dry_run_artifact"], encoding="utf-8") as f:
+            content = json.load(f)
+        assert content["benchmark"] == "mbpp"
+
+    def test_mbpp_dry_run_artifact_json_adapter(self):
+        result = dry_run("mbpp")
+        with open(result["dry_run_artifact"], encoding="utf-8") as f:
+            content = json.load(f)
+        assert content["adapter"] == "MBPPAdapter"
+
+
+class TestHumanEvalFixtureBackedDryRun:
+    def test_humaneval_dry_run_num_tasks_ge_two(self):
+        result = dry_run("humaneval")
+        assert result["num_tasks"] >= 2
+
+    def test_humaneval_dry_run_contains_dry_run_artifact(self):
+        result = dry_run("humaneval")
+        assert "dry_run_artifact" in result
+
+    def test_humaneval_dry_run_artifact_path_ends_correctly(self):
+        result = dry_run("humaneval")
+        assert result["dry_run_artifact"].endswith(
+            os.path.join("benchmark_results", "humaneval_dry_run.json")
+        )
+
+    def test_humaneval_dry_run_artifact_file_exists(self):
+        result = dry_run("humaneval")
+        assert os.path.isfile(result["dry_run_artifact"])
+
+    def test_humaneval_dry_run_artifact_json_benchmark(self):
+        result = dry_run("humaneval")
+        with open(result["dry_run_artifact"], encoding="utf-8") as f:
+            content = json.load(f)
+        assert content["benchmark"] == "humaneval"
+
+    def test_humaneval_dry_run_artifact_json_adapter(self):
+        result = dry_run("humaneval")
+        with open(result["dry_run_artifact"], encoding="utf-8") as f:
+            content = json.load(f)
+        assert content["adapter"] == "HumanEvalAdapter"

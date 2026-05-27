@@ -1,63 +1,59 @@
 """
-HumanEval benchmark adapter skeleton.
+HumanEval benchmark adapter — small fixture implementation.
 
-HumanEval — Chen et al., 2021 (Evaluating Large Language Models Trained on Code).
-  Paper: https://arxiv.org/abs/2107.03374
-  Dataset: 164 hand-written Python programming problems.
-
-Status: SKELETON — load_tasks() and normalize() raise NotImplementedError.
-Full implementation will be added when HumanEval integration is formally scoped.
+Benchmark-2: loads from data/fixtures/humaneval_small.json.
+No LLM calls. No Docker. No network. No sandbox.
 """
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from reliability_harness.benchmarks.adapters.base import BenchmarkAdapter
 from reliability_harness.benchmarks.task_schema import BenchmarkTask
+from reliability_harness.utils.paths import DATA_ROOT
+
+_FIXTURE_PATH = DATA_ROOT / "fixtures" / "humaneval_small.json"
 
 
 class HumanEvalAdapter(BenchmarkAdapter):
-    """Adapter skeleton for the HumanEval benchmark."""
+    """Adapter for HumanEval (Chen et al., 2021) — small fixture."""
 
     name = "humaneval"
+    FIXTURE_PATH = _FIXTURE_PATH
 
     def load_tasks(
         self,
         split: str = "test",
         limit: int | None = None,
     ) -> list[BenchmarkTask]:
-        """
-        TODO (next benchmark phase): Load HumanEval tasks.
+        """Load HumanEval tasks from the local small fixture file.
 
-        Expected data source: data/tasks/humaneval/ or HuggingFace `openai_humaneval`.
-        HumanEval has a single split ("test", 164 tasks).
-
-        Raises NotImplementedError until full integration is implemented.
-        Use --dry-run in run_benchmark to validate the pipeline skeleton without
-        loading data.
+        Parameters
+        ----------
+        split:
+            Accepted for API compatibility; only "test" is present in the fixture.
+        limit:
+            If set, return at most this many tasks.
         """
-        raise NotImplementedError(
-            "HumanEvalAdapter.load_tasks() is not yet implemented. "
-            "Full HumanEval data loading will be added in the next benchmark phase. "
-            "Run with --dry-run to inspect the pipeline skeleton."
-        )
+        with open(self.FIXTURE_PATH, encoding="utf-8") as f:
+            raw_tasks = json.load(f)
+
+        tasks = [self.normalize(raw) for raw in raw_tasks]
+
+        if limit is not None:
+            tasks = tasks[:limit]
+
+        return tasks
 
     def normalize(self, raw_task: Any) -> BenchmarkTask:
-        """
-        TODO (next benchmark phase): Map raw HumanEval record to BenchmarkTask.
-
-        Expected HumanEval record fields:
-          - task_id (str)              → task_id (e.g. "HumanEval/0")
-          - prompt (str)               → prompt
-          - canonical_solution (str)   → reference_solution
-          - test (str)                 → tests = [raw_task["test"]]
-          - entry_point (str)          → entry_point
-
-        Normalisation notes:
-          - benchmark = "humaneval".
-          - metadata = {} (no additional fields needed).
-          - The test string is a self-contained Python module with check() calls.
-        """
-        raise NotImplementedError(
-            "HumanEvalAdapter.normalize() is not yet implemented."
+        """Map a raw fixture record to BenchmarkTask."""
+        return BenchmarkTask(
+            task_id=raw_task["task_id"],
+            benchmark=raw_task["benchmark"],
+            prompt=raw_task["prompt"],
+            entry_point=raw_task.get("entry_point"),
+            tests=raw_task.get("tests", []),
+            reference_solution=raw_task.get("reference_solution"),
+            metadata=raw_task.get("metadata", {}),
         )

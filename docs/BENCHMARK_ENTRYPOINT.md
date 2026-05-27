@@ -22,9 +22,47 @@ python -m reliability_harness.experiments.run_benchmark --benchmark <name> [--dr
 
 Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
-> **Current phase:** `tiny` dry-run is fully functional and writes an output artifact.
-> Full `mbpp`/`humaneval` execution (data loading, agent runtime, sandbox) is not yet
-> implemented. Full run will be enabled in the next benchmark phase.
+> **Current phase (Benchmark-2):** `tiny`, `mbpp`, and `humaneval` dry-runs are fully
+> functional and each writes an output artifact. Full execution (agent runtime, sandbox)
+> is not yet implemented and will be enabled in a future benchmark phase.
+
+---
+
+## Benchmark-2: MBPP / HumanEval Small Fixture Loading
+
+`mbpp` and `humaneval` now load from local deterministic fixture files.
+No LLM, no Docker, no memory, no code execution.
+
+**Fixture files:**
+- `data/fixtures/mbpp_small.json` — 2 MBPP-style tasks
+- `data/fixtures/humaneval_small.json` — 2 HumanEval-style tasks
+
+```bash
+# Shell
+bash scripts/run_benchmark_dry_run.sh mbpp
+bash scripts/run_benchmark_dry_run.sh humaneval
+
+# Python module
+python -m reliability_harness.experiments.run_benchmark --benchmark mbpp --dry-run
+python -m reliability_harness.experiments.run_benchmark --benchmark humaneval --dry-run
+
+# CLI
+python -m reliability_harness.cli benchmark --benchmark mbpp --dry-run
+python -m reliability_harness.cli benchmark --benchmark humaneval --dry-run
+```
+
+Each dry-run writes a manifest artifact to:
+
+```
+outputs/benchmark_results/mbpp_dry_run.json
+outputs/benchmark_results/humaneval_dry_run.json
+```
+
+The artifact JSON includes `benchmark`, `adapter`, `status`, `num_tasks`, and path fields.
+Both artifact files are covered by `.gitignore` and are not committed to the repo.
+
+> **Benchmark-2 scope:** data loading only. No LLM, no Docker, no memory,
+> no code execution, no retry/reflection, no process metrics.
 
 ---
 
