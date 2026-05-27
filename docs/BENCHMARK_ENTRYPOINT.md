@@ -88,6 +88,21 @@ All paths are resolved from repo root via `reliability_harness.utils.paths` — 
 
 ---
 
+## Memory Isolation Policy
+
+Official benchmark runs **do not** reuse legacy ReActX memory by default.
+
+- The default Chroma collection is `reliability_failure_memory` (not `reactx_failure_memory`).
+- Persistent memory is **disabled** in dry-run and skeleton phases.
+- To enable persistent memory in a full run, set:
+  ```bash
+  export RELIABILITY_HARNESS_MEMORY_COLLECTION=reliability_failure_memory
+  ```
+- `REACTX_MEMORY_COLLECTION` is a deprecated explicit alias; it is only read when explicitly set by the user and will emit a `DeprecationWarning`.
+- Legacy `data/chroma_db_data/` collections from the ReActX prototype phase are **excluded** from paper results. Do not enable them for official benchmark runs.
+
+---
+
 ## What NOT to Use for Paper Results
 
 | Script / Entry | Status | Reason |

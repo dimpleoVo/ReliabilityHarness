@@ -1,12 +1,34 @@
 import logging
+import os
 from reliability_harness.core.rag import RAG_Engine
 
 logger = logging.getLogger(__name__)
 
+# Official env var: RELIABILITY_HARNESS_MEMORY_COLLECTION
+# Deprecated explicit alias: REACTX_MEMORY_COLLECTION (only when explicitly set by user)
+_DEFAULT_COLLECTION = "reliability_failure_memory"
+
+
+def _resolve_collection_name() -> str:
+    name = os.environ.get("RELIABILITY_HARNESS_MEMORY_COLLECTION")
+    if name:
+        return name
+    legacy = os.environ.get("REACTX_MEMORY_COLLECTION")
+    if legacy:
+        import warnings
+        warnings.warn(
+            "REACTX_MEMORY_COLLECTION is deprecated. "
+            "Use RELIABILITY_HARNESS_MEMORY_COLLECTION instead.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        return legacy
+    return _DEFAULT_COLLECTION
+
 
 class FailureMemoryVectorStore:
     def __init__(self):
-        self.rag = RAG_Engine(collection_name="reactx_failure_memory")
+        self.rag = RAG_Engine(collection_name=_resolve_collection_name())
 
     def build_text(self, item: dict) -> str:
         return f"""Task:
