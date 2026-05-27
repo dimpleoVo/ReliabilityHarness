@@ -12,7 +12,6 @@ REPO_ROOT: Path = PACKAGE_ROOT.parent
 CONFIGS_ROOT: Path = REPO_ROOT / "configs"
 DOCS_ROOT: Path = REPO_ROOT / "docs"
 SCRIPTS_ROOT: Path = REPO_ROOT / "scripts"
-LEGACY_REACTX_ROOT: Path = REPO_ROOT / "ReActX"
 
 # ── Input data (canonical locations) ─────────────────────────────────────────
 DATA_ROOT: Path = REPO_ROOT / "data"
