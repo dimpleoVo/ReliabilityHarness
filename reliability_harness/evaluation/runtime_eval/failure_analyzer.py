@@ -34,7 +34,7 @@ class FailureAnalyzer:
             failure_summary.append("runtime_error")
 
         # 🔥 只有在没有 judge 时才标记
-        if eval_result.get("source") == "evalforge_engine" and eval_result.get("no_gt"):
+        if eval_result.get("source") == "reliability_evaluator" and eval_result.get("no_gt"):
             failure_summary.append("no_ground_truth")
 
         if error_type == "semantic_error":

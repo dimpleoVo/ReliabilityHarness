@@ -6,8 +6,8 @@ import io
 import threading
 
 
-EXEC_DIR = "/workspace/reactx_exec"
-EXEC_FILE_PREFIX = "reactx_job"
+EXEC_DIR = "/workspace/reliability_exec"
+EXEC_FILE_PREFIX = "reliability_job"
 
 
 class DockerSandboxExecutor:

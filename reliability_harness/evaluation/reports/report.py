@@ -12,7 +12,7 @@ def generate_badcase_html(path, badcases):
     <html>
     <head>
     <meta charset="UTF-8">
-    <title>EvalForge Badcases</title>
+    <title>ReliabilityHarness Badcases</title>
     <style>
     body {
         font-family: Arial, sans-serif;
@@ -56,7 +56,7 @@ def generate_badcase_html(path, badcases):
     </style>
     </head>
     <body>
-    <h1>EvalForge Badcases</h1>
+    <h1>ReliabilityHarness Badcases</h1>
     """
 
     for case in badcases:

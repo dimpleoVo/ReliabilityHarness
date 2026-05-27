@@ -8,7 +8,7 @@ def _e(s: str) -> str:
 def write_badcase_debugger_html(
     out_path: str,
     badcases: List[Dict[str, Any]],
-    title: str = "EvalForge Badcase Visual Debugger",
+    title: str = "ReliabilityHarness Badcase Visual Debugger",
 ):
     # 预构建过滤项
     doc_types = sorted({c.get("meta", {}).get("doc_type", "unknown") for c in badcases})

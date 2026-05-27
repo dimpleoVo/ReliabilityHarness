@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from reliability_harness.sandbox.executor import DockerSandboxExecutor
 
-app = FastAPI(title="ReActX Sandbox Service", version="1.0.0")
+app = FastAPI(title="ReliabilityHarness Sandbox Service", version="1.0.0")
 executor = DockerSandboxExecutor()
 
 

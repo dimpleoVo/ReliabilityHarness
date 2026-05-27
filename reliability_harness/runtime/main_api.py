@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from reliability_harness.runtime.loop.closed_loop_runner import run_closed_loop
 
 print("MAIN START")
-app = FastAPI(title="ReActX API", version="2.0")
+app = FastAPI(title="ReliabilityHarness API", version="2.0")
 
 
 class QueryRequest(BaseModel):

@@ -87,7 +87,7 @@ def run_openai_compat_model(model_config, gt_dir: str, output_pred_dir: str):
         try:
             pred = _call_openai_compat(base_url, api_key, model_name, messages, timeout=timeout)
         except Exception as e:
-            # 失败就写空，EvalForge 会统计 invalid output
+            # 失败就写空，ReliabilityHarness evaluation layer 会统计 invalid output
             pred = ""
         t1 = time.time()
 

@@ -183,7 +183,7 @@ Fix the logic and return ONLY valid Python code.
 # 🔥 EvalForge + LLM Judge（核心）
 # ===============================
 def run_evalforge(traj_dict):
-    print("\n[EvalForge REAL] evaluating...")
+    print("\n[ReliabilityHarness Eval] evaluating...")
 
     sample = trajectory_to_eval_sample(traj_dict)
 
@@ -230,7 +230,7 @@ def run_evalforge(traj_dict):
         "runtime_error": eval_raw.get("runtime_error"),
         "no_gt": eval_raw.get("no_gt", False),
         "failure": failure,
-        "source": "evalforge_engine"
+        "source": "reliability_evaluator"
     }
 
 

@@ -3,7 +3,7 @@ def generate_leaderboard_html(path, summaries, slice_keys):
     <html>
     <head>
     <meta charset="UTF-8">
-    <title>EvalForge Leaderboard</title>
+    <title>ReliabilityHarness Leaderboard</title>
     <style>
     body {
         font-family: Arial, sans-serif;
@@ -28,7 +28,7 @@ def generate_leaderboard_html(path, summaries, slice_keys):
     </style>
     </head>
     <body>
-    <h1>EvalForge Leaderboard</h1>
+    <h1>ReliabilityHarness Leaderboard</h1>
     """
 
     html += """
