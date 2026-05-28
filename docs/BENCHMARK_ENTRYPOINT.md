@@ -28,6 +28,91 @@ Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
 ---
 
+## Benchmark-5A: Minimal Observable Process Metrics
+
+**Status:** Implemented.
+
+**Scope:** `build_run_summary()` now automatically populates `metrics.process` with
+minimal observable process signals derived from generation and execution artifact fields.
+
+**Fields populated in `metrics.process`:**
+
+| Field | Type | Definition |
+|---|---|---|
+| `generation_completed` | `bool` | `extraction_status` field is present in generation section |
+| `code_extraction_success` | `bool` | `extraction_status == "success"` AND `has_extracted_code is True` |
+| `execution_attempted` | `bool` | `execution_performed is True` |
+| `execution_completed` | `bool` | `execution_performed is True` AND `timed_out is False` |
+| `execution_success` | `bool` | `tests_passed is True` AND `timed_out is False` AND `error_type is None` |
+| `timeout_observed` | `bool` | `timed_out is True` |
+| `runtime_error_observed` | `bool` | `error_type == "runtime_error"` |
+| `process_failure_stage` | `str` | `"extraction"` / `"execution"` / `"completed"` / `"unknown"` |
+| `observable_process_success` | `bool` | all pipeline stages succeeded |
+| `is_full_process_reliability_metric` | `bool` | always `false` |
+| `definition` | `str` | human-readable definition string |
+
+**`process_failure_stage` enum:**
+
+| Value | Condition |
+|---|---|
+| `"extraction"` | `code_extraction_success is False` |
+| `"execution"` | extraction succeeded but `execution_success is False` |
+| `"completed"` | extraction succeeded AND execution succeeded |
+| `"generation"` | reserved — future missing generation artifact / batch pipeline |
+| `"unknown"` | required fields missing or generation section absent |
+
+**`observable_process_success` definition:**
+```
+generation_completed
+AND code_extraction_success
+AND execution_attempted
+AND execution_completed
+AND execution_success
+```
+
+**Relation to `final_success`:**
+
+`observable_process_success` may align with `final_success` in simple single-attempt
+code-generation tasks. They are semantically different:
+
+- `final_success` — final execution success proxy  
+  (`extraction_status == success AND execution_performed AND tests_passed`)
+- `observable_process_success` — minimal observable pipeline success signal
+
+`observable_process_success` is **not** a replacement for future reasoning/tool/retry/memory
+metrics. `is_full_process_reliability_metric` is always `false`.
+
+**What is NOT implemented (Benchmark-5A boundaries):**
+- reasoning consistency
+- tool correctness
+- retry / recovery
+- memory-assisted recovery
+- LLM-as-judge
+- full failure taxonomy
+
+These are minimal observable process signals, **not full process reliability metrics**.
+
+**New module:** `reliability_harness/metrics/process_metrics.py`
+
+**Public API:**
+```python
+from reliability_harness.metrics.process_metrics import (
+    compute_minimal_process_metrics,               # from a full summary dict
+    compute_minimal_process_metrics_from_sections, # from generation + execution section dicts
+)
+```
+
+**`metrics.process` is auto-populated in `build_run_summary()`.** No API change required.
+`metrics.recovery`, `metrics.memory`, and `diagnostics.failure` remain empty.
+
+**Benchmark-5A boundaries:**
+- `run_benchmark.py` and `cli.py` are unchanged.
+- No batch, manifest, or directory processing.
+- No generate+execute+summarize one-command pipeline changes.
+- No LLM calls, no Docker, no retry/memory.
+
+---
+
 ## Benchmark-4D.2: Auto Write Run Summary after Execution Artifact
 
 **Status:** Implemented.

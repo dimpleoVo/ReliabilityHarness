@@ -273,9 +273,10 @@ class TestModelNamePreserved:
 # ── 12. metrics extension points ─────────────────────────────────────────────
 
 class TestMetricsExtensionPoints:
-    def test_metrics_process_is_empty_dict(self):
+    def test_metrics_process_is_populated_dict(self):
         result = _build()
-        assert result["metrics"]["process"] == {}
+        assert isinstance(result["metrics"]["process"], dict)
+        assert len(result["metrics"]["process"]) > 0
 
     def test_metrics_recovery_is_empty_dict(self):
         result = _build()
@@ -621,4 +622,73 @@ class TestBuildFromPaths:
             build_run_summary_from_paths(
                 tmp_path / "missing_gen.json",
                 tmp_path / "missing_exec.json",
+            )
+
+
+# ── Benchmark-5A: metrics.process populated in run summary ───────────────────
+
+class TestProcessMetricsInSummary:
+    """Verify build_run_summary populates metrics.process (Benchmark-5A)."""
+
+    def test_build_fills_metrics_process(self):
+        result = _build()
+        assert result["metrics"]["process"]
+        assert isinstance(result["metrics"]["process"], dict)
+
+    def test_observable_process_success_true_all_success(self):
+        result = _build(
+            _gen_artifact(extraction_status="success"),
+            _exec_artifact(execution_performed=True, tests_passed=True),
+        )
+        assert result["metrics"]["process"]["observable_process_success"] is True
+
+    def test_process_failure_stage_completed_all_success(self):
+        result = _build(
+            _gen_artifact(extraction_status="success"),
+            _exec_artifact(execution_performed=True, tests_passed=True),
+        )
+        assert result["metrics"]["process"]["process_failure_stage"] == "completed"
+
+    def test_process_failure_stage_extraction_on_extraction_failure(self):
+        result = _build(
+            _gen_artifact(extraction_status="failed", extracted_code=""),
+            _exec_artifact(execution_performed=True, tests_passed=False),
+        )
+        assert result["metrics"]["process"]["process_failure_stage"] == "extraction"
+
+    def test_process_failure_stage_execution_on_execution_failure(self):
+        result = _build(
+            _gen_artifact(extraction_status="success"),
+            _exec_artifact(
+                execution_performed=True,
+                tests_passed=False,
+                error_type="assertion_failure",
+            ),
+        )
+        assert result["metrics"]["process"]["process_failure_stage"] == "execution"
+
+    def test_metrics_recovery_remains_empty(self):
+        result = _build()
+        assert result["metrics"]["recovery"] == {}
+
+    def test_metrics_memory_remains_empty(self):
+        result = _build()
+        assert result["metrics"]["memory"] == {}
+
+    def test_diagnostics_failure_remains_empty(self):
+        result = _build()
+        assert result["diagnostics"]["failure"] == {}
+
+    def test_success_is_process_reliability_metric_remains_false(self):
+        result = _build()
+        assert result["success"]["is_process_reliability_metric"] is False
+
+    def test_summary_does_not_copy_raw_fields(self):
+        forbidden = ("prompt", "raw_response", "extracted_code", "candidate_code",
+                     "stdout", "stderr")
+        result = _build()
+        text = json.dumps(result)
+        for key in forbidden:
+            assert f'"{key}"' not in text, (
+                f"Forbidden raw field {key!r} found in summary JSON"
             )

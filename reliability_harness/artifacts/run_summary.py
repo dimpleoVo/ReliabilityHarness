@@ -1,12 +1,14 @@
-"""Run summary artifact builder for Benchmark-4D.1.
+"""Run summary artifact builder — Benchmark-4D.1 stable envelope +
+Benchmark-5A minimal observable process metrics.
 
 Aggregates a generation artifact and its corresponding execution artifact into a
 lightweight, extensible single-run summary.
 
 Design: stable envelope + extensible sections
   - Top-level structure is stable and versioned.
-  - metrics.process / metrics.recovery / metrics.memory are empty extension points —
-    process metrics, retry/recovery, and memory effect are NOT computed here.
+  - metrics.process is automatically populated with minimal observable process
+    signals (Benchmark-5A).  These are NOT full process reliability metrics.
+  - metrics.recovery / metrics.memory are empty extension points.
   - diagnostics.failure is an empty extension point — failure taxonomy is NOT computed here.
   - Large raw fields (prompt, raw_response, extracted_code, candidate_code, stdout, stderr)
     are NOT copied; the summary only stores path references to the source artifacts.
@@ -18,10 +20,11 @@ final_success definition:
   The core thesis of this paper is that final task success does not fully reflect
   agent reliability — process metrics are required for that.
 
-Not in scope for 4D.1:
-  - CLI / run_benchmark wiring
+Not in scope (Benchmark-5A boundaries):
+  - CLI / run_benchmark wiring changes
   - batch / manifest / directory summary
-  - process metrics, retry, memory, failure taxonomy
+  - reasoning consistency, tool correctness, retry/recovery, memory-assisted recovery
+  - LLM-as-judge, full failure taxonomy
 """
 from __future__ import annotations
 
@@ -31,6 +34,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from reliability_harness.metrics.process_metrics import (
+    compute_minimal_process_metrics_from_sections,
+)
 from reliability_harness.utils.paths import ARTIFACTS_ROOT
 
 _ARTIFACT_VERSION = "4D.1"
@@ -162,6 +168,23 @@ def build_run_summary(
 
     runner_type = result.get("runner_type", "docker" if result.get("docker_used") else "local")
 
+    generation_section = {
+        "extraction_status": extraction_status,
+        "has_extracted_code": bool(generation_artifact.get("extracted_code")),
+    }
+    execution_section = {
+        "execution_performed": execution_performed,
+        "runner_type": runner_type,
+        "docker_used": bool(result["docker_used"]),
+        "tests_passed": tests_passed,
+        "error_type": result["error_type"],
+        "timed_out": bool(result["timed_out"]),
+        "execution_time_ms": result["execution_time_ms"],
+    }
+    process_metrics = compute_minimal_process_metrics_from_sections(
+        generation_section, execution_section
+    )
+
     return {
         "artifact_version": _ARTIFACT_VERSION,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -175,19 +198,8 @@ def build_run_summary(
             "generation_artifact_path": str(generation_artifact_path),
             "execution_artifact_path": str(execution_artifact_path),
         },
-        "generation": {
-            "extraction_status": extraction_status,
-            "has_extracted_code": bool(generation_artifact.get("extracted_code")),
-        },
-        "execution": {
-            "execution_performed": execution_performed,
-            "runner_type": runner_type,
-            "docker_used": bool(result["docker_used"]),
-            "tests_passed": tests_passed,
-            "error_type": result["error_type"],
-            "timed_out": bool(result["timed_out"]),
-            "execution_time_ms": result["execution_time_ms"],
-        },
+        "generation": generation_section,
+        "execution": execution_section,
         "success": {
             # final_success is a final execution success proxy, not a process reliability metric.
             "final_success": final_success,
@@ -198,9 +210,8 @@ def build_run_summary(
             ),
             "is_process_reliability_metric": False,
         },
-        # Extension points — not populated in Benchmark-4D.1
         "metrics": {
-            "process": {},
+            "process": process_metrics,
             "recovery": {},
             "memory": {},
         },
@@ -213,8 +224,14 @@ def build_run_summary(
                 "not a process reliability metric"
             ),
             (
-                "process metrics, retry, memory, and failure taxonomy "
-                "are not computed in Benchmark-4D.1"
+                "metrics.process contains minimal observable signals only (Benchmark-5A); "
+                "reasoning consistency, tool correctness, retry/recovery, "
+                "memory-assisted recovery, and LLM-as-judge are not implemented"
+            ),
+            (
+                "metrics.recovery and metrics.memory are empty "
+                "(Benchmark-4D.1 extension points, not yet populated); "
+                "failure taxonomy is not computed"
             ),
         ],
     }
