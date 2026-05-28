@@ -8,6 +8,7 @@ Usage:
     python -m reliability_harness.cli benchmark --benchmark tiny --generate --limit 1 --model-name deepseek-chat
     python -m reliability_harness.cli benchmark --execute-generation-artifact outputs/predictions/<run_id>/tiny_001.json
     python -m reliability_harness.cli benchmark --execute-generation-artifact <artifact> --execution-timeout-ms 10000
+    python -m reliability_harness.cli benchmark --aggregate-run-summaries outputs/artifacts/run_summaries/*.json
 """
 import argparse
 import json
@@ -74,6 +75,7 @@ def cmd_benchmark(args: argparse.Namespace) -> None:
         execute_generation_artifact_path=getattr(args, "execute_generation_artifact", None),
         execute_local=getattr(args, "execute_local", False),
         execution_timeout_ms=getattr(args, "execution_timeout_ms", 10000),
+        aggregate_run_summary_paths=getattr(args, "aggregate_run_summaries", None),
     )
     print(json.dumps(result, indent=2))
 
@@ -151,6 +153,19 @@ def main(argv: list[str] | None = None) -> None:
         ),
     )
     bm.add_argument(
+        "--aggregate-run-summaries",
+        dest="aggregate_run_summaries",
+        nargs="+",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Aggregate multiple run summary JSON files into a single aggregate summary artifact "
+            "(Benchmark-6B.2). Accepts one or more explicit file paths; shell glob expansion is "
+            "supported. Does not call LLM, Docker, or execute code. "
+            "Cannot be combined with --dry-run, --generate, or --execute-generation-artifact."
+        ),
+    )
+    bm.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -184,7 +199,7 @@ def main(argv: list[str] | None = None) -> None:
     elif args.command == "paths":
         cmd_paths(args)
     elif args.command == "benchmark":
-        # Mutual exclusion: --dry-run, --generate, --execute-generation-artifact
+        # Mutual exclusion: --dry-run, --generate, --execute-generation-artifact, --aggregate-run-summaries
         active = []
         if args.dry_run:
             active.append("--dry-run")
@@ -192,16 +207,23 @@ def main(argv: list[str] | None = None) -> None:
             active.append("--generate")
         if args.execute_generation_artifact is not None:
             active.append("--execute-generation-artifact")
+        if args.aggregate_run_summaries is not None:
+            active.append("--aggregate-run-summaries")
         if len(active) > 1:
             bm.error(
                 f"Modes are mutually exclusive: {' and '.join(active)} cannot be combined."
             )
-        # --benchmark required unless --execute-generation-artifact is set
-        if args.execute_generation_artifact is None and args.benchmark is None:
+        # --benchmark required unless --execute-generation-artifact or --aggregate-run-summaries is set
+        if (
+            args.execute_generation_artifact is None
+            and args.aggregate_run_summaries is None
+            and args.benchmark is None
+        ):
             bm.error(
                 "--benchmark is required. Supported: "
                 + ", ".join(_benchmarks)
-                + ". (--benchmark is optional only when --execute-generation-artifact is used)"
+                + ". (--benchmark is optional only when --execute-generation-artifact "
+                + "or --aggregate-run-summaries is used)"
             )
         cmd_benchmark(args)
     else:

@@ -359,3 +359,241 @@ class TestCliForwardsRunSummaryFields:
         assert data["run_summary_artifact_path"] is None or isinstance(
             data["run_summary_artifact_path"], str
         )
+
+
+# ── Fake aggregate helpers (Benchmark-6B.2) ────────────────────────────────────
+
+_FAKE_AGGREGATE_ARTIFACT_PATH = "/tmp/aggregate_summaries/aggregate_summary_cli_fake.json"
+
+
+def _fake_aggregate_result(paths=None):
+    paths = paths or ["/tmp/a.json"]
+    return {
+        "aggregate_summary_artifact_path": _FAKE_AGGREGATE_ARTIFACT_PATH,
+        "summary_written": True,
+        "input": {"run_summary_paths": [str(p) for p in paths]},
+        "counts": {
+            "total_runs": len(paths),
+            "final_success_count": 0,
+            "observable_process_success_count": 0,
+            "failure_observed_count": 0,
+            "timeout_count": 0,
+            "runtime_error_count": 0,
+        },
+        "rates": {
+            "final_success_rate": 0.0,
+            "observable_process_success_rate": 0.0,
+            "failure_observed_rate": 0.0,
+            "timeout_rate": 0.0,
+            "runtime_error_rate": 0.0,
+        },
+        "distributions": {
+            "failure_stage_distribution": {},
+            "failure_type_distribution": {},
+        },
+        "artifact_version": "6A.1",
+    }
+
+
+def _patch_run_aggregate(monkeypatch):
+    """Monkeypatch run_benchmark.run; returns aggregate result when aggregate_run_summary_paths set."""
+    calls: list[dict] = []
+
+    def fake_run(**kwargs):
+        calls.append(kwargs)
+        if kwargs.get("aggregate_run_summary_paths") is not None:
+            return _fake_aggregate_result(kwargs["aggregate_run_summary_paths"])
+        return _fake_exec_result(str(kwargs.get("execute_generation_artifact_path", "test.json")))
+
+    monkeypatch.setattr(rb_mod, "run", fake_run)
+    return calls
+
+
+# ── 15. Benchmark-6B.2: CLI aggregate forwarding ──────────────────────────────
+
+class TestCLIAggregateForwardsPaths:
+    def test_aggregate_run_summaries_forwards_paths(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json", "/tmp/b.json"])
+        assert len(calls) == 1
+        assert calls[0]["aggregate_run_summary_paths"] == ["/tmp/a.json", "/tmp/b.json"]
+
+    def test_aggregate_accepts_multiple_paths(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        paths = ["/tmp/a.json", "/tmp/b.json", "/tmp/c.json"]
+        cli_main(["benchmark", "--aggregate-run-summaries"] + paths)
+        assert calls[0]["aggregate_run_summary_paths"] == paths
+
+    def test_aggregate_accepts_single_path(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json"])
+        assert calls[0]["aggregate_run_summary_paths"] == ["/tmp/a.json"]
+
+    def test_aggregate_does_not_require_benchmark(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json"])
+        assert len(calls) == 1
+        assert calls[0]["benchmark"] is None
+
+    def test_aggregate_benchmark_none_forwarded(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json"])
+        assert calls[0]["aggregate_run_summary_paths"] == ["/tmp/a.json"]
+        assert calls[0]["benchmark"] is None
+
+    def test_aggregate_with_benchmark_also_accepted(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--benchmark", "tiny", "--aggregate-run-summaries", "/tmp/a.json"])
+        assert len(calls) == 1
+        assert calls[0]["benchmark"] == "tiny"
+        assert calls[0]["aggregate_run_summary_paths"] == ["/tmp/a.json"]
+
+
+# ── 16. Benchmark-6B.2: CLI aggregate return fields ───────────────────────────
+
+class TestCLIAggregateReturnFields:
+    def test_aggregate_returns_aggregate_summary_artifact_path(self, monkeypatch, capsys):
+        _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json"])
+        data = json.loads(capsys.readouterr().out)
+        assert "aggregate_summary_artifact_path" in data
+        assert isinstance(data["aggregate_summary_artifact_path"], str)
+
+    def test_aggregate_returns_summary_written_true(self, monkeypatch, capsys):
+        _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json"])
+        data = json.loads(capsys.readouterr().out)
+        assert data["summary_written"] is True
+
+    def test_aggregate_returns_counts(self, monkeypatch, capsys):
+        _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json"])
+        data = json.loads(capsys.readouterr().out)
+        assert "counts" in data
+        assert isinstance(data["counts"], dict)
+
+    def test_aggregate_returns_rates(self, monkeypatch, capsys):
+        _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json"])
+        data = json.loads(capsys.readouterr().out)
+        assert "rates" in data
+        assert isinstance(data["rates"], dict)
+
+    def test_aggregate_returns_distributions(self, monkeypatch, capsys):
+        _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json"])
+        data = json.loads(capsys.readouterr().out)
+        assert "distributions" in data
+        assert isinstance(data["distributions"], dict)
+
+
+# ── 17. Benchmark-6B.2: CLI aggregate no LLM / no Docker ──────────────────────
+
+class TestCLIAggregateNoLLMOrDocker:
+    def test_aggregate_does_not_call_llm_client_from_env(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        with patch(
+            "reliability_harness.runtime.generation.llm_client.LLMClient.from_env",
+            side_effect=AssertionError(
+                "LLMClient.from_env must not be called in aggregate mode"
+            ),
+        ):
+            cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json"])
+        assert len(calls) == 1
+
+    def test_aggregate_succeeds_without_api_key(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+        cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json"])
+        assert len(calls) == 1
+
+    def test_aggregate_does_not_call_execute_generation_artifact(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        with patch(
+            "reliability_harness.runtime.execution.integration.execute_generation_artifact",
+            side_effect=AssertionError(
+                "execute_generation_artifact must not be called in aggregate mode"
+            ),
+        ):
+            cli_main(["benchmark", "--aggregate-run-summaries", "/tmp/a.json"])
+        assert len(calls) == 1
+
+
+# ── 18. Benchmark-6B.2: CLI aggregate mutual exclusion ────────────────────────
+
+class TestCLIAggregateMutualExclusion:
+    def test_dry_run_and_aggregate_exits(self, monkeypatch):
+        _patch_run_aggregate(monkeypatch)
+        with pytest.raises(SystemExit):
+            cli_main([
+                "benchmark",
+                "--benchmark", "tiny",
+                "--dry-run",
+                "--aggregate-run-summaries", "/tmp/a.json",
+            ])
+
+    def test_generate_and_aggregate_exits(self, monkeypatch):
+        _patch_run_aggregate(monkeypatch)
+        with pytest.raises(SystemExit):
+            cli_main([
+                "benchmark",
+                "--benchmark", "tiny",
+                "--generate",
+                "--aggregate-run-summaries", "/tmp/a.json",
+            ])
+
+    def test_execute_artifact_and_aggregate_exits(self, monkeypatch, tmp_path):
+        _patch_run_aggregate(monkeypatch)
+        with pytest.raises(SystemExit):
+            cli_main([
+                "benchmark",
+                "--execute-generation-artifact", str(tmp_path / "gen.json"),
+                "--aggregate-run-summaries", "/tmp/a.json",
+            ])
+
+    def test_dry_run_without_benchmark_still_exits(self):
+        with pytest.raises(SystemExit):
+            cli_main(["benchmark", "--dry-run"])
+
+    def test_generate_without_benchmark_still_exits(self):
+        with pytest.raises(SystemExit):
+            cli_main(["benchmark", "--generate"])
+
+
+# ── 19. Benchmark-6B.2: existing modes unaffected ─────────────────────────────
+
+class TestCLIExistingModesUnaffectedByAggregate:
+    def test_dry_run_passes_aggregate_none(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--benchmark", "tiny", "--dry-run"])
+        assert len(calls) == 1
+        assert calls[0]["dry_run_mode"] is True
+        assert calls[0]["aggregate_run_summary_paths"] is None
+
+    def test_generate_passes_aggregate_none(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--benchmark", "tiny", "--generate"])
+        assert len(calls) == 1
+        assert calls[0]["generate_mode"] is True
+        assert calls[0]["aggregate_run_summary_paths"] is None
+
+    def test_execute_generation_artifact_passes_aggregate_none(self, monkeypatch, tmp_path):
+        calls = _patch_run_aggregate(monkeypatch)
+        path = str(tmp_path / "gen.json")
+        cli_main(["benchmark", "--execute-generation-artifact", path])
+        assert len(calls) == 1
+        assert calls[0]["execute_generation_artifact_path"] == path
+        assert calls[0]["aggregate_run_summary_paths"] is None
+
+    def test_dry_run_still_dispatches_correctly(self, monkeypatch):
+        calls = _patch_run_aggregate(monkeypatch)
+        cli_main(["benchmark", "--benchmark", "tiny", "--dry-run"])
+        assert calls[0]["benchmark"] == "tiny"
+        assert calls[0]["dry_run_mode"] is True
+
+    def test_execute_generation_artifact_still_dispatches_correctly(self, monkeypatch, tmp_path):
+        calls = _patch_run_aggregate(monkeypatch)
+        path = str(tmp_path / "gen.json")
+        cli_main(["benchmark", "--execute-generation-artifact", path])
+        assert calls[0]["execute_generation_artifact_path"] == path
+        assert calls[0]["execute_local"] is False

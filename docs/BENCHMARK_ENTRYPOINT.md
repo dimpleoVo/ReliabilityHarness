@@ -144,12 +144,60 @@ recursion, and manifest files are NOT supported — paths must be explicit.
 | `--generate` without `--benchmark` | Error: --benchmark required |
 
 **Benchmark-6B.1 boundaries:**
-- `cli.py` is unchanged — CLI forwarding is not implemented yet.
+- `cli.py` is unchanged — CLI forwarding is Benchmark-6B.2.
 - Input must be explicit run summary JSON paths (shell-expanded by the shell).
 - No batch, manifest, directory, or Python-internal glob processing.
 - No generate+execute+summarize one-command pipeline.
 - No LLM calls, no Docker, no retry/memory.
 - Aggregate summary output goes to `outputs/artifacts/aggregate_summaries/`.
+
+---
+
+## Benchmark-6B.2: CLI Forwarding for Aggregate Summaries
+
+**Status:** Implemented.
+
+**Scope:** `cli.py benchmark` subcommand now forwards `--aggregate-run-summaries` to
+`run_benchmark.run()`. The CLI command is equivalent to the module command for
+aggregate summary mode.  
+**Not in scope:** directory/manifest/batch execution, generate+execute+aggregate one-command
+pipeline, retry, memory.
+
+**Target command:**
+```bash
+python -m reliability_harness.cli benchmark \
+  --aggregate-run-summaries outputs/artifacts/run_summaries/*.json
+```
+
+**CLI ≡ module command:** The following pairs are equivalent:
+
+```bash
+python -m reliability_harness.cli benchmark \
+  --aggregate-run-summaries outputs/artifacts/run_summaries/*.json
+
+python -m reliability_harness.experiments.run_benchmark \
+  --aggregate-run-summaries outputs/artifacts/run_summaries/*.json
+```
+
+**Mode mutual exclusion (CLI layer):**
+
+| Combination | Result |
+|---|---|
+| `--aggregate-run-summaries` alone | OK |
+| `--benchmark tiny --aggregate-run-summaries` | OK (benchmark forwarded, unused by aggregate) |
+| `--aggregate-run-summaries --dry-run` | Error: mutually exclusive |
+| `--aggregate-run-summaries --generate` | Error: mutually exclusive |
+| `--aggregate-run-summaries --execute-generation-artifact` | Error: mutually exclusive |
+| `--dry-run` without `--benchmark` | Error: --benchmark required |
+| `--generate` without `--benchmark` | Error: --benchmark required |
+
+**Benchmark-6B.2 boundaries:**
+- Input must be explicit run summary JSON paths (shell glob expansion by the shell).
+- No batch, manifest, directory, or Python-internal glob processing.
+- No generate+execute+aggregate one-command pipeline.
+- No LLM calls, no Docker, no retry/memory.
+- Aggregate summary output goes to `outputs/artifacts/aggregate_summaries/`.
+- `run_benchmark.py` and `aggregate_summary.py` are unchanged.
 
 ---
 
