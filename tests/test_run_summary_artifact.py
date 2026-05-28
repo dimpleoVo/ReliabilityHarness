@@ -1,4 +1,6 @@
 """Tests for Benchmark-4D.1 — run summary artifact builder.
+Benchmark-5A — metrics.process auto-populated.
+Benchmark-5B — diagnostics.failure auto-populated.
 
 No LLM calls. No Docker. No memory/retry. No real execution.
 
@@ -14,8 +16,8 @@ Covered:
 9.  timed_out is included in execution section
 10. error_type is included in execution section
 11. model_name is preserved in identity
-12. metrics has process / recovery / memory as empty dicts
-13. diagnostics has failure as empty dict
+12. metrics has process (populated) / recovery {} / memory {}
+13. diagnostics has failure (populated, not empty dict)
 14. success.is_process_reliability_metric is False
 15. limitations mentions final_success not a process reliability metric
 16. summary does NOT copy prompt/raw_response/extracted_code/candidate_code/stdout/stderr
@@ -291,12 +293,21 @@ class TestMetricsExtensionPoints:
         assert set(result["metrics"].keys()) == {"process", "recovery", "memory"}
 
 
-# ── 13. diagnostics extension point ──────────────────────────────────────────
+# ── 13. diagnostics.failure is populated (Benchmark-5B) ──────────────────────
 
 class TestDiagnosticsExtensionPoint:
-    def test_diagnostics_failure_is_empty_dict(self):
+    def test_diagnostics_failure_is_populated_dict(self):
         result = _build()
-        assert result["diagnostics"]["failure"] == {}
+        assert isinstance(result["diagnostics"]["failure"], dict)
+        assert len(result["diagnostics"]["failure"]) > 0
+
+    def test_diagnostics_failure_has_failure_observed(self):
+        result = _build()
+        assert "failure_observed" in result["diagnostics"]["failure"]
+
+    def test_diagnostics_failure_has_failure_stage(self):
+        result = _build()
+        assert "failure_stage" in result["diagnostics"]["failure"]
 
 
 # ── 14. success.is_process_reliability_metric is False ───────────────────────
@@ -675,9 +686,10 @@ class TestProcessMetricsInSummary:
         result = _build()
         assert result["metrics"]["memory"] == {}
 
-    def test_diagnostics_failure_remains_empty(self):
+    def test_diagnostics_failure_is_now_populated(self):
         result = _build()
-        assert result["diagnostics"]["failure"] == {}
+        assert isinstance(result["diagnostics"]["failure"], dict)
+        assert len(result["diagnostics"]["failure"]) > 0
 
     def test_success_is_process_reliability_metric_remains_false(self):
         result = _build()
@@ -692,3 +704,92 @@ class TestProcessMetricsInSummary:
             assert f'"{key}"' not in text, (
                 f"Forbidden raw field {key!r} found in summary JSON"
             )
+
+
+# ── Benchmark-5B: diagnostics.failure populated in run summary ────────────────
+
+class TestFailureDiagnosticsInSummary:
+    """Verify build_run_summary populates diagnostics.failure (Benchmark-5B)."""
+
+    def test_build_fills_diagnostics_failure(self):
+        result = _build()
+        assert result["diagnostics"]["failure"]
+        assert isinstance(result["diagnostics"]["failure"], dict)
+
+    def test_success_failure_observed_false(self):
+        result = _build(
+            _gen_artifact(extraction_status="success"),
+            _exec_artifact(execution_performed=True, tests_passed=True),
+        )
+        assert result["diagnostics"]["failure"]["failure_observed"] is False
+
+    def test_success_failure_stage_none(self):
+        result = _build(
+            _gen_artifact(extraction_status="success"),
+            _exec_artifact(execution_performed=True, tests_passed=True),
+        )
+        assert result["diagnostics"]["failure"]["failure_stage"] == "none"
+
+    def test_extraction_failure_failure_stage_extraction(self):
+        result = _build(
+            _gen_artifact(extraction_status="failed", extracted_code=""),
+            _exec_artifact(execution_performed=True, tests_passed=False),
+        )
+        assert result["diagnostics"]["failure"]["failure_stage"] == "extraction"
+
+    def test_execution_failure_failure_stage_execution(self):
+        result = _build(
+            _gen_artifact(extraction_status="success"),
+            _exec_artifact(
+                execution_performed=True,
+                tests_passed=False,
+                error_type="assertion_failure",
+            ),
+        )
+        assert result["diagnostics"]["failure"]["failure_stage"] == "execution"
+
+    def test_timeout_failure_type_timeout(self):
+        result = _build(
+            _gen_artifact(extraction_status="success"),
+            _exec_artifact(
+                execution_performed=True,
+                tests_passed=False,
+                error_type="timeout",
+                timed_out=True,
+            ),
+        )
+        assert result["diagnostics"]["failure"]["failure_type"] == "timeout"
+
+    def test_is_full_failure_taxonomy_false(self):
+        result = _build()
+        assert result["diagnostics"]["failure"]["is_full_failure_taxonomy"] is False
+
+    def test_failure_diagnostics_does_not_overwrite_metrics_process(self):
+        result = _build()
+        assert "observable_process_success" in result["metrics"]["process"]
+
+    def test_metrics_recovery_remains_empty(self):
+        result = _build()
+        assert result["metrics"]["recovery"] == {}
+
+    def test_metrics_memory_remains_empty(self):
+        result = _build()
+        assert result["metrics"]["memory"] == {}
+
+    def test_summary_does_not_copy_raw_fields(self):
+        forbidden = ("prompt", "raw_response", "extracted_code", "candidate_code",
+                     "stdout", "stderr")
+        result = _build()
+        text = json.dumps(result)
+        for key in forbidden:
+            assert f'"{key}"' not in text, (
+                f"Forbidden raw field {key!r} found in summary JSON"
+            )
+
+    def test_success_is_process_reliability_metric_remains_false(self):
+        result = _build()
+        assert result["success"]["is_process_reliability_metric"] is False
+
+    def test_metrics_process_is_full_process_reliability_metric_false(self):
+        result = _build()
+        assert result["metrics"]["process"]["is_full_process_reliability_metric"] is False

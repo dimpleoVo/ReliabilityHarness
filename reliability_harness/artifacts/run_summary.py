@@ -1,5 +1,6 @@
 """Run summary artifact builder — Benchmark-4D.1 stable envelope +
-Benchmark-5A minimal observable process metrics.
+Benchmark-5A minimal observable process metrics +
+Benchmark-5B minimal observable failure diagnostics.
 
 Aggregates a generation artifact and its corresponding execution artifact into a
 lightweight, extensible single-run summary.
@@ -8,8 +9,9 @@ Design: stable envelope + extensible sections
   - Top-level structure is stable and versioned.
   - metrics.process is automatically populated with minimal observable process
     signals (Benchmark-5A).  These are NOT full process reliability metrics.
+  - diagnostics.failure is automatically populated with minimal observable failure
+    diagnostics (Benchmark-5B).  These are NOT a full failure taxonomy.
   - metrics.recovery / metrics.memory are empty extension points.
-  - diagnostics.failure is an empty extension point — failure taxonomy is NOT computed here.
   - Large raw fields (prompt, raw_response, extracted_code, candidate_code, stdout, stderr)
     are NOT copied; the summary only stores path references to the source artifacts.
 
@@ -20,11 +22,11 @@ final_success definition:
   The core thesis of this paper is that final task success does not fully reflect
   agent reliability — process metrics are required for that.
 
-Not in scope (Benchmark-5A boundaries):
+Not in scope (Benchmark-5B boundaries):
   - CLI / run_benchmark wiring changes
   - batch / manifest / directory summary
+  - root-cause analysis, reasoning trace, LLM-as-judge, full failure taxonomy
   - reasoning consistency, tool correctness, retry/recovery, memory-assisted recovery
-  - LLM-as-judge, full failure taxonomy
 """
 from __future__ import annotations
 
@@ -34,6 +36,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from reliability_harness.diagnostics.failure_diagnostics import (
+    compute_minimal_failure_diagnostics_from_sections,
+)
 from reliability_harness.metrics.process_metrics import (
     compute_minimal_process_metrics_from_sections,
 )
@@ -184,6 +189,9 @@ def build_run_summary(
     process_metrics = compute_minimal_process_metrics_from_sections(
         generation_section, execution_section
     )
+    failure_diagnostics = compute_minimal_failure_diagnostics_from_sections(
+        generation_section, execution_section, metrics_process=process_metrics
+    )
 
     return {
         "artifact_version": _ARTIFACT_VERSION,
@@ -216,7 +224,7 @@ def build_run_summary(
             "memory": {},
         },
         "diagnostics": {
-            "failure": {},
+            "failure": failure_diagnostics,
         },
         "limitations": [
             (
@@ -229,9 +237,13 @@ def build_run_summary(
                 "memory-assisted recovery, and LLM-as-judge are not implemented"
             ),
             (
+                "diagnostics.failure contains minimal observable diagnostics only "
+                "(Benchmark-5B); root-cause analysis, reasoning trace, LLM-as-judge, "
+                "and full failure taxonomy are not implemented"
+            ),
+            (
                 "metrics.recovery and metrics.memory are empty "
-                "(Benchmark-4D.1 extension points, not yet populated); "
-                "failure taxonomy is not computed"
+                "(Benchmark-4D.1 extension points, not yet populated)"
             ),
         ],
     }

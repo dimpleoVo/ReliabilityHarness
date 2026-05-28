@@ -28,6 +28,86 @@ Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
 ---
 
+## Benchmark-5B: Minimal Observable Failure Diagnostics
+
+**Status:** Implemented.
+
+**Scope:** `build_run_summary()` now automatically populates `diagnostics.failure` with
+minimal observable failure diagnostic signals derived from generation and execution artifact fields.
+
+**Fields populated in `diagnostics.failure`:**
+
+| Field | Type | Definition |
+|---|---|---|
+| `failure_observed` | `bool` | `true` if any failure was detected |
+| `failure_stage` | `str` | `"none"` / `"extraction"` / `"execution"` / `"unknown"` |
+| `failure_type` | `str` | see enum below |
+| `failure_source` | `str \| null` | artifact field that triggered the diagnosis |
+| `timed_out` | `bool` | `timed_out` value from execution section |
+| `error_type` | `str \| null` | `error_type` value from execution section |
+| `is_full_failure_taxonomy` | `bool` | always `false` |
+| `definition` | `str` | human-readable definition string |
+
+**`failure_stage` enum:**
+
+| Value | Condition |
+|---|---|
+| `"none"` | no failure observed |
+| `"extraction"` | `extraction_status != "success"` OR `has_extracted_code is False` |
+| `"execution"` | extraction succeeded but execution failed |
+| `"unknown"` | required fields missing or section absent |
+
+Note: `diagnostics.failure` does not use `"completed"` — it describes the stage of failure,
+not a pipeline completion state.  When `metrics.process.process_failure_stage == "completed"`,
+`diagnostics.failure.failure_stage` is `"none"`.
+
+**`failure_type` enum (priority order):**
+
+| Value | Trigger |
+|---|---|
+| `"extraction_failed"` | `extraction_status != "success"` |
+| `"no_extracted_code"` | `extraction_status == "success"` AND `has_extracted_code is False` |
+| `"execution_not_performed"` | extraction succeeded AND `execution_performed is not True` |
+| `"timeout"` | `timed_out is True` |
+| `"assertion_failure"` | `error_type == "assertion_failure"` |
+| `"syntax_error"` | `error_type == "syntax_error"` |
+| `"runtime_error"` | `error_type == "runtime_error"` |
+| `"unknown_execution_error"` | `tests_passed is False` AND `error_type` is unrecognised/None |
+| `"none"` | success |
+| `"unknown"` | required fields missing |
+
+**`diagnostics.failure` is auto-populated in `build_run_summary()`.** No API change required.
+`metrics.process`, `metrics.recovery`, `metrics.memory` are unchanged.
+
+**What is NOT implemented (Benchmark-5B boundaries):**
+- root-cause analysis
+- LLM-as-judge
+- reasoning trace
+- tool correctness
+- retry / recovery
+- memory-assisted recovery
+- full failure taxonomy
+
+These are minimal observable diagnostics, **not full root-cause taxonomy**.
+
+**New module:** `reliability_harness/diagnostics/failure_diagnostics.py`
+
+**Public API:**
+```python
+from reliability_harness.diagnostics.failure_diagnostics import (
+    compute_minimal_failure_diagnostics,               # from a full summary dict
+    compute_minimal_failure_diagnostics_from_sections, # from generation + execution section dicts
+)
+```
+
+**Benchmark-5B boundaries:**
+- `run_benchmark.py` and `cli.py` are unchanged.
+- No batch, manifest, or directory processing.
+- No generate+execute+summarize one-command pipeline changes.
+- No LLM calls, no Docker, no retry/memory.
+
+---
+
 ## Benchmark-5A: Minimal Observable Process Metrics
 
 **Status:** Implemented.
