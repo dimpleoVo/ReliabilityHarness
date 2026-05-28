@@ -28,6 +28,86 @@ Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
 ---
 
+## Benchmark-4D.1: Extensible Single-Run Summary Schema
+
+**Status:** Implemented.
+
+**Scope:** `reliability_harness/artifacts/run_summary.py` provides a run summary builder
+that aggregates a generation artifact and its corresponding execution artifact into a
+lightweight, machine-readable single-run summary.  
+**Not in scope:** CLI / run_benchmark wiring, batch/manifest/directory summary, process metrics,
+failure taxonomy, retry, memory effect.
+
+| Component | File | Status |
+|---|---|---|
+| Run summary builder | `reliability_harness/artifacts/run_summary.py` | Done |
+| Run summary tests | `tests/test_run_summary_artifact.py` | Done |
+
+**Design: stable envelope + extensible sections**
+
+```json
+{
+  "artifact_version": "4D.1",
+  "created_at": "...",
+  "identity":       { "run_id", "benchmark", "task_id", "model_name" },
+  "artifact_refs":  { "generation_artifact_path", "execution_artifact_path" },
+  "generation":     { "extraction_status", "has_extracted_code" },
+  "execution":      { "execution_performed", "runner_type", "docker_used",
+                      "tests_passed", "error_type", "timed_out", "execution_time_ms" },
+  "success":        { "final_success", "definition", "is_process_reliability_metric" },
+  "metrics":        { "process": {}, "recovery": {}, "memory": {} },
+  "diagnostics":    { "failure": {} },
+  "limitations":    [ "..." ]
+}
+```
+
+**`final_success` definition:**
+
+```
+extraction_status == "success"
+AND execution_performed is True
+AND tests_passed is True
+```
+
+`final_success` is a **final execution success proxy**, not a process reliability metric.
+`success.is_process_reliability_metric` is always `false`.
+`metrics.process`, `metrics.recovery`, `metrics.memory`, and `diagnostics.failure` are
+empty extension points — they are not populated in Benchmark-4D.1.
+
+This distinction is fundamental to the paper thesis:
+> *Final task success does not fully reflect agent reliability.*
+
+**What the summary does NOT copy:**
+
+Large raw fields — `prompt`, `raw_response`, `extracted_code`, `candidate_code`,
+`stdout`, `stderr` — are never copied into the summary. Only path references to
+the source artifacts are stored (`artifact_refs`).
+
+**Public API:**
+
+```python
+from reliability_harness.artifacts.run_summary import (
+    build_run_summary,               # main builder
+    build_run_summary_from_paths,    # convenience: load from disk + build
+    write_run_summary,               # write to outputs/artifacts/run_summaries/
+    load_json,                       # load artifact JSON (raises RunSummaryError)
+    RunSummaryError,                 # raised on missing/inconsistent fields
+)
+```
+
+**Output path:** `outputs/artifacts/run_summaries/{run_id}_{task_id}_summary.json`
+(covered by `.gitignore` via `outputs/*`).
+
+**Benchmark-4D.1 boundaries:**
+- `run_benchmark.py` and `cli.py` are **unchanged** — no wiring yet.
+- Input must be a single (generation artifact, execution artifact) pair.
+- No batch, manifest, or directory summary.
+- No generate+execute+summarize one-command pipeline.
+- No process metrics, retry/recovery metrics, memory effect metrics.
+- No failure taxonomy.
+
+---
+
 ## Benchmark-4C.2b: CLI Forwarding for Execution Artifact Mode
 
 **Status:** Implemented.

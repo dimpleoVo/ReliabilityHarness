@@ -36,4 +36,5 @@ python -m pytest \
   tests/test_execution_integration.py \
   tests/test_benchmark_execution_entrypoint.py \
   tests/test_benchmark_cli_forwarding.py \
+  tests/test_run_summary_artifact.py \
   -v
