@@ -89,6 +89,70 @@ It reads only pre-computed run summary artifact fields.
 
 ---
 
+## Benchmark-6B.1: run_benchmark Aggregate Summary Entrypoint
+
+**Status:** Implemented.
+
+**Scope:** `run_benchmark.py` now supports `--aggregate-run-summaries` for aggregating
+multiple pre-computed run summary artifacts into a single aggregate summary.
+Wires the `--aggregate-run-summaries` flag to `build_aggregate_summary_from_paths()`
+and `write_aggregate_summary()` from Benchmark-6A.  
+**Not in scope:** CLI forwarding (`cli.py` unchanged), directory/manifest/glob processing
+inside Python, batch execution, code generation.
+
+**Target command:**
+```bash
+python -m reliability_harness.experiments.run_benchmark \
+  --aggregate-run-summaries outputs/artifacts/run_summaries/*.json
+```
+
+Shell glob expansion (`*.json`) is supported. Python-internal glob, directory
+recursion, and manifest files are NOT supported — paths must be explicit.
+
+**What this entrypoint does NOT do:**
+- Does not call LLM or require an API key
+- Does not call Docker or execute any code
+- Does not run generation, execution, or retry
+- Does not perform directory scanning or manifest resolution
+
+**Output path:** `outputs/artifacts/aggregate_summaries/aggregate_summary_{timestamp}.json`  
+(covered by `.gitignore` via `outputs/*`).
+
+**Returned JSON fields:**
+
+| Field | Description |
+|---|---|
+| `aggregate_summary_artifact_path` | Path of the written aggregate summary JSON |
+| `summary_written` | Always `true` on success |
+| `input` | `{ "run_summary_paths": [...] }` |
+| `counts` | `total_runs`, `final_success_count`, etc. |
+| `rates` | `final_success_rate`, `observable_process_success_rate`, etc. |
+| `distributions` | `failure_stage_distribution`, `failure_type_distribution` |
+| `artifact_version` | Forwarded from the aggregate summary (e.g. `"6A.1"`) |
+
+**Mode mutual exclusion (updated):**
+
+| Combination | Result |
+|---|---|
+| `--aggregate-run-summaries` alone | OK |
+| `--aggregate-run-summaries` without `--benchmark` | OK |
+| `--aggregate-run-summaries --benchmark tiny` | OK (benchmark is unused) |
+| `--aggregate-run-summaries --dry-run` | Error: mutually exclusive |
+| `--aggregate-run-summaries --generate` | Error: mutually exclusive |
+| `--aggregate-run-summaries --execute-generation-artifact` | Error: mutually exclusive |
+| `--dry-run` without `--benchmark` | Error: --benchmark required |
+| `--generate` without `--benchmark` | Error: --benchmark required |
+
+**Benchmark-6B.1 boundaries:**
+- `cli.py` is unchanged — CLI forwarding is not implemented yet.
+- Input must be explicit run summary JSON paths (shell-expanded by the shell).
+- No batch, manifest, directory, or Python-internal glob processing.
+- No generate+execute+summarize one-command pipeline.
+- No LLM calls, no Docker, no retry/memory.
+- Aggregate summary output goes to `outputs/artifacts/aggregate_summaries/`.
+
+---
+
 ## Benchmark-5B: Minimal Observable Failure Diagnostics
 
 **Status:** Implemented.

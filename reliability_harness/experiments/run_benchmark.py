@@ -16,6 +16,9 @@ Generation mode (Benchmark-3 — LLM candidate generation, no execution):
     python -m reliability_harness.experiments.run_benchmark --benchmark tiny --generate
     python -m reliability_harness.experiments.run_benchmark --benchmark tiny --generate --limit 1 --model-name deepseek-chat
 
+Aggregate run summaries (Benchmark-6B.1 — aggregate multiple run summary artifacts):
+    python -m reliability_harness.experiments.run_benchmark --aggregate-run-summaries outputs/artifacts/run_summaries/*.json
+
 Full run (not yet implemented — process evaluation coming next phase):
     python -m reliability_harness.experiments.run_benchmark --benchmark mbpp
 
@@ -167,11 +170,36 @@ def _execute_generation_artifact_entrypoint(
     )
 
 
+def _execute_aggregate_run_summaries_entrypoint(paths: list[str]) -> dict[str, Any]:
+    """Aggregate multiple run summary JSON files into a single aggregate summary (Benchmark-6B.1).
+
+    Deferred imports ensure dry-run, generate, and execute modes never import
+    aggregate summary helpers.
+    """
+    from reliability_harness.artifacts.aggregate_summary import (
+        build_aggregate_summary_from_paths,
+        write_aggregate_summary,
+    )
+
+    summary = build_aggregate_summary_from_paths(paths)
+    artifact_path = write_aggregate_summary(summary)
+    return {
+        "aggregate_summary_artifact_path": str(artifact_path),
+        "summary_written": True,
+        "input": summary["input"],
+        "counts": summary["counts"],
+        "rates": summary["rates"],
+        "distributions": summary["distributions"],
+        "artifact_version": summary.get("artifact_version"),
+    }
+
+
 def run(
     benchmark: str | None = None,
     dry_run_mode: bool = False,
     generate_mode: bool = False,
     execute_generation_artifact_path: str | None = None,
+    aggregate_run_summary_paths: list[str] | None = None,
     execute_local: bool = False,
     execution_timeout_ms: int = 10000,
     **kwargs: Any,
@@ -183,8 +211,7 @@ def run(
     benchmark:
         Benchmark name, e.g. "mbpp", "humaneval", or "tiny".
         Required for dry_run_mode and generate_mode.
-        Not required when execute_generation_artifact_path is set
-        (benchmark is read from the artifact JSON).
+        Not required when execute_generation_artifact_path or aggregate_run_summary_paths is set.
     dry_run_mode:
         If True, return the pipeline manifest without loading data or calling LLMs.
     generate_mode:
@@ -194,6 +221,9 @@ def run(
         If set, execute a single per-task generation artifact JSON (Benchmark-4C.2a).
         Uses Docker by default; set execute_local=True for local runner.
         Does not call LLMClient, generator, memory, or retry.
+    aggregate_run_summary_paths:
+        If set, aggregate multiple run summary JSON files into a single aggregate
+        summary artifact (Benchmark-6B.1). Does not call LLM, Docker, or execute code.
     execute_local:
         If True, use local runner (use_docker=False) for execution mode.
         Only safe for trusted fixture code.
@@ -212,11 +242,12 @@ def run(
     NotImplementedError
         When no mode flag is set (full execution not yet implemented).
     """
-    # Mutual exclusion: --dry-run, --generate, --execute-generation-artifact
+    # Mutual exclusion: --dry-run, --generate, --execute-generation-artifact, --aggregate-run-summaries
     active_modes = [
         ("--dry-run", dry_run_mode),
         ("--generate", generate_mode),
         ("--execute-generation-artifact", execute_generation_artifact_path is not None),
+        ("--aggregate-run-summaries", aggregate_run_summary_paths is not None),
     ]
     active_names = [name for name, is_active in active_modes if is_active]
     if len(active_names) > 1:
@@ -242,6 +273,9 @@ def run(
             use_docker=not execute_local,
             timeout_ms=execution_timeout_ms,
         )
+
+    if aggregate_run_summary_paths is not None:
+        return _execute_aggregate_run_summaries_entrypoint(aggregate_run_summary_paths)
 
     raise NotImplementedError(
         f"Full execution for benchmark={benchmark!r} is not yet implemented. "
@@ -327,6 +361,19 @@ def main(argv: list[str] | None = None) -> None:
         ),
     )
     parser.add_argument(
+        "--aggregate-run-summaries",
+        dest="aggregate_run_summaries",
+        nargs="+",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Aggregate multiple run summary JSON files into a single aggregate summary artifact "
+            "(Benchmark-6B.1). Accepts one or more explicit file paths; shell glob expansion is "
+            "supported. Does not call LLM, Docker, or execute code. "
+            "Cannot be combined with --dry-run, --generate, or --execute-generation-artifact."
+        ),
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -362,17 +409,24 @@ def main(argv: list[str] | None = None) -> None:
         active.append("--generate")
     if args.execute_generation_artifact is not None:
         active.append("--execute-generation-artifact")
+    if args.aggregate_run_summaries is not None:
+        active.append("--aggregate-run-summaries")
     if len(active) > 1:
         parser.error(
             f"Modes are mutually exclusive: {' and '.join(active)} cannot be combined."
         )
 
-    # --benchmark required unless --execute-generation-artifact is used
-    if args.execute_generation_artifact is None and args.benchmark is None:
+    # --benchmark required unless --execute-generation-artifact or --aggregate-run-summaries is used
+    if (
+        args.execute_generation_artifact is None
+        and args.aggregate_run_summaries is None
+        and args.benchmark is None
+    ):
         parser.error(
             "--benchmark is required. Supported: "
             + ", ".join(list_benchmarks())
-            + ". (--benchmark is optional only when --execute-generation-artifact is used)"
+            + ". (--benchmark is optional only when --execute-generation-artifact "
+            + "or --aggregate-run-summaries is used)"
         )
 
     result = run(
@@ -380,6 +434,7 @@ def main(argv: list[str] | None = None) -> None:
         dry_run_mode=args.dry_run,
         generate_mode=args.generate,
         execute_generation_artifact_path=args.execute_generation_artifact,
+        aggregate_run_summary_paths=args.aggregate_run_summaries,
         execute_local=args.execute_local,
         execution_timeout_ms=args.execution_timeout_ms,
         limit=args.limit,
