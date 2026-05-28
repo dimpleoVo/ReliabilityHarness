@@ -1,5 +1,7 @@
 # ReliabilityHarness — Benchmark Entrypoint Reference
 
+> **Manual experiment protocol (controlled runs, paper log, interpretation rules):** see [EXPERIMENT_PROTOCOL.md](EXPERIMENT_PROTOCOL.md).
+
 > **Migration-5A status:** `ReActX/`, `app/`, and `evalforge/` have been archived to `legacy/`.
 > Root-level `tests/` are the authoritative test constraints for the new architecture.
 > `legacy/ReActX/test_*.py` are archived legacy tests and are NOT constraints on `reliability_harness.*`.
