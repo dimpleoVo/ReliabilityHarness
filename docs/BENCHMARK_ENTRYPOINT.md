@@ -28,6 +28,91 @@ Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
 ---
 
+## Benchmark-4C.2b: CLI Forwarding for Execution Artifact Mode
+
+**Status:** Implemented.
+
+**Scope:** `cli.py benchmark` subcommand now forwards `--execute-generation-artifact`,
+`--execute-local`, and `--execution-timeout-ms` to `run_benchmark.run()`.
+The CLI command is now equivalent to the module command for execution artifact mode.  
+**Not in scope:** directory/manifest/batch execution, generate+execute one-command pipeline,
+retry, memory, process reliability metrics.
+
+| Component | File | Status |
+|---|---|---|
+| CLI forwarding | `reliability_harness/cli.py` | Done |
+| CLI forwarding tests | `tests/test_benchmark_cli_forwarding.py` | Done |
+
+**Target commands:**
+
+```bash
+# Execute a generation artifact via CLI (equivalent to python -m ...run_benchmark)
+python -m reliability_harness.cli benchmark \
+  --execute-generation-artifact outputs/predictions/<run_id>/tiny_001.json
+
+# With explicit timeout
+python -m reliability_harness.cli benchmark \
+  --execute-generation-artifact outputs/predictions/<run_id>/tiny_001.json \
+  --execution-timeout-ms 10000
+
+# With local runner (trusted fixture code only, no Docker daemon required)
+python -m reliability_harness.cli benchmark \
+  --execute-generation-artifact outputs/predictions/<run_id>/tiny_001.json \
+  --execute-local
+
+# With explicit --benchmark (optional, for documentation; artifact JSON has benchmark)
+python -m reliability_harness.cli benchmark \
+  --benchmark tiny \
+  --execute-generation-artifact outputs/predictions/<run_id>/tiny_001.json
+
+# Existing modes unchanged
+python -m reliability_harness.cli benchmark --benchmark tiny --dry-run
+python -m reliability_harness.cli benchmark --benchmark tiny --generate --limit 1
+```
+
+**CLI ≡ module command:** The following pairs are equivalent:
+
+```bash
+python -m reliability_harness.cli benchmark \
+  --execute-generation-artifact <artifact> --execution-timeout-ms 10000
+
+python -m reliability_harness.experiments.run_benchmark \
+  --execute-generation-artifact <artifact> --execution-timeout-ms 10000
+```
+
+**Benchmark-4C.2b boundaries:**
+
+- `--execute-generation-artifact` is mutually exclusive with `--dry-run` and `--generate`.
+- `--benchmark` is optional when `--execute-generation-artifact` is provided; required otherwise.
+- Default runner is Docker (`--execute-local` not set). `--execute-local` overrides to local runner.
+  Local runner is only safe for trusted fixture code — never for untrusted agent-generated code.
+- Default Docker execution timeout is **10000ms** (`--execution-timeout-ms 10000`).
+  1000ms is too short for Docker cold start and causes spurious `timed_out: true` results.
+- No manifest execution, no directory execution, no batch execution.
+- No generate+execute one-command pipeline.
+- No retry, memory, or process reliability metrics.
+- Execution artifacts are written to `outputs/executions/` (covered by `.gitignore`).
+
+**Timeout flag:**
+
+| Flag | Default | Notes |
+|---|---|---|
+| `--execution-timeout-ms N` | `10000` | Docker execution timeout per task. 1000ms causes cold-start timeouts. |
+
+**Mode mutual exclusion (CLI layer):**
+
+| Combination | Result |
+|---|---|
+| `--execute-generation-artifact` alone | OK |
+| `--benchmark tiny --execute-generation-artifact` | OK |
+| `--execute-generation-artifact --execute-local` | OK (local runner) |
+| `--dry-run --execute-generation-artifact` | Error: mutually exclusive |
+| `--generate --execute-generation-artifact` | Error: mutually exclusive |
+| `--dry-run` without `--benchmark` | Error: --benchmark required |
+| `--generate` without `--benchmark` | Error: --benchmark required |
+
+---
+
 ## Benchmark-4C.2a: run_benchmark Execution Entrypoint
 
 **Status:** Implemented.

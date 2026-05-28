@@ -6,6 +6,8 @@ Usage:
     python -m reliability_harness.cli benchmark --benchmark mbpp --dry-run
     python -m reliability_harness.cli benchmark --benchmark humaneval --dry-run
     python -m reliability_harness.cli benchmark --benchmark tiny --generate --limit 1 --model-name deepseek-chat
+    python -m reliability_harness.cli benchmark --execute-generation-artifact outputs/predictions/<run_id>/tiny_001.json
+    python -m reliability_harness.cli benchmark --execute-generation-artifact <artifact> --execution-timeout-ms 10000
 """
 import argparse
 import json
@@ -69,11 +71,14 @@ def cmd_benchmark(args: argparse.Namespace) -> None:
         model_name=getattr(args, "model_name", "deepseek-chat"),
         temperature=getattr(args, "temperature", 0.0),
         max_tokens=getattr(args, "max_tokens", 1024),
+        execute_generation_artifact_path=getattr(args, "execute_generation_artifact", None),
+        execute_local=getattr(args, "execute_local", False),
+        execution_timeout_ms=getattr(args, "execution_timeout_ms", 10000),
     )
     print(json.dumps(result, indent=2))
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="python -m reliability_harness.cli",
         description="ReliabilityHarness package CLI",
@@ -83,13 +88,23 @@ def main() -> None:
     sub.add_parser("paths", help="Show resolved filesystem paths")
 
     from reliability_harness.benchmarks.registry import list_benchmarks
-    bm = sub.add_parser("benchmark", help="Run benchmark dry-run or generation")
+    _benchmarks = list_benchmarks()
+    bm = sub.add_parser(
+        "benchmark",
+        help="Run benchmark dry-run, generation, or execution artifact",
+    )
     bm.add_argument(
         "--benchmark",
-        required=True,
-        choices=list_benchmarks(),
+        required=False,
+        default=None,
+        choices=_benchmarks,
         metavar="BENCHMARK",
-        help=f"Benchmark name. Supported: {', '.join(list_benchmarks())}",
+        help=(
+            f"Benchmark name. Supported: {', '.join(_benchmarks)}. "
+            "Required for --dry-run and --generate. "
+            "Optional when --execute-generation-artifact is used "
+            "(benchmark is read from the artifact JSON)."
+        ),
     )
     bm.add_argument(
         "--dry-run",
@@ -102,6 +117,38 @@ def main() -> None:
         action="store_true",
         default=False,
         help="Run Benchmark-3 generation-only LLM candidate generation (requires DEEPSEEK_API_KEY)",
+    )
+    bm.add_argument(
+        "--execute-generation-artifact",
+        dest="execute_generation_artifact",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Execute a single per-task generation artifact JSON (Benchmark-4C.2b). "
+            "Input must be a per-task artifact produced by --generate. "
+            "Default runner is Docker. Use --execute-local for local runner. "
+            "Cannot be combined with --dry-run or --generate."
+        ),
+    )
+    bm.add_argument(
+        "--execute-local",
+        dest="execute_local",
+        action="store_true",
+        default=False,
+        help=(
+            "Use local runner instead of Docker for --execute-generation-artifact. "
+            "Only safe for trusted fixture code. Not for untrusted agent-generated code."
+        ),
+    )
+    bm.add_argument(
+        "--execution-timeout-ms",
+        dest="execution_timeout_ms",
+        type=int,
+        default=10000,
+        help=(
+            "Docker execution timeout in milliseconds for --execute-generation-artifact "
+            "(default: 10000). The default 10000ms accounts for Docker cold-start overhead."
+        ),
     )
     bm.add_argument(
         "--limit",
@@ -130,13 +177,32 @@ def main() -> None:
         help="Max tokens per generation (default: 1024)",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.command == "info":
         cmd_info(args)
     elif args.command == "paths":
         cmd_paths(args)
     elif args.command == "benchmark":
+        # Mutual exclusion: --dry-run, --generate, --execute-generation-artifact
+        active = []
+        if args.dry_run:
+            active.append("--dry-run")
+        if args.generate:
+            active.append("--generate")
+        if args.execute_generation_artifact is not None:
+            active.append("--execute-generation-artifact")
+        if len(active) > 1:
+            bm.error(
+                f"Modes are mutually exclusive: {' and '.join(active)} cannot be combined."
+            )
+        # --benchmark required unless --execute-generation-artifact is set
+        if args.execute_generation_artifact is None and args.benchmark is None:
+            bm.error(
+                "--benchmark is required. Supported: "
+                + ", ".join(_benchmarks)
+                + ". (--benchmark is optional only when --execute-generation-artifact is used)"
+            )
         cmd_benchmark(args)
     else:
         parser.print_help()
