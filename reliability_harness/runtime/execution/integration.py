@@ -1,7 +1,7 @@
-"""Generation-to-execution integration helper — Benchmark-4C.1.
+"""Generation-to-execution integration helper — Benchmark-4C.1 / 4D.2.
 
 Connects a Benchmark-3 per-task generation artifact to the Benchmark-4
-execution contract:
+execution contract, and (by default) auto-writes a run summary artifact:
 
   generation artifact (JSON)
     -> extracted_code + BenchmarkTask.tests
@@ -9,6 +9,7 @@ execution contract:
     -> execute_in_docker (or execute_locally)
     -> ExecutionResult
     -> ExecutionArtifact (written to outputs/executions/)
+    -> RunSummary (written to outputs/artifacts/run_summaries/)  [Benchmark-4D.2]
 
 No LLM. No memory. No retry. No closed_loop_runner. No CLI wiring.
 run_benchmark.py is unchanged by this module.
@@ -22,6 +23,10 @@ from typing import Any, Optional
 from reliability_harness.artifacts.execution_artifact import (
     build_execution_artifact,
     write_execution_artifact,
+)
+from reliability_harness.artifacts.run_summary import (
+    build_run_summary,
+    write_run_summary,
 )
 from reliability_harness.benchmarks.registry import get_adapter
 from reliability_harness.runtime.execution.contract import ExecutionInput
@@ -52,8 +57,13 @@ def execute_generation_artifact(
     backend: Any = None,
     use_docker: bool = True,
     timeout_ms: int = 10000,
+    write_summary: bool = True,
+    summary_output_dir: Optional[Path] = None,
 ) -> dict[str, Any]:
-    """Load a generation artifact, execute its code, and write an execution artifact.
+    """Load a generation artifact, execute its code, and write artifacts.
+
+    Benchmark-4D.2: after writing the execution artifact, auto-builds and
+    writes a run summary artifact (write_summary=True by default).
 
     Parameters
     ----------
@@ -68,12 +78,18 @@ def execute_generation_artifact(
     use_docker:
         If True (default), run via execute_in_docker.
         If False, run via execute_locally (trusted fixture code only).
+    write_summary:
+        If True (default), build and write a run summary artifact after execution.
+    summary_output_dir:
+        Directory for the run summary artifact.
+        Defaults to outputs/artifacts/run_summaries/.
 
     Returns
     -------
-    dict with keys: generation_artifact_path, execution_artifact_path, run_id,
-    benchmark, task_id, model_name, extraction_status, runner_type,
-    docker_used, execution_performed, tests_passed, error_type.
+    dict with keys: generation_artifact_path, execution_artifact_path,
+    run_summary_artifact_path, run_id, benchmark, task_id, model_name,
+    extraction_status, runner_type, docker_used, execution_performed,
+    tests_passed, error_type, final_success, summary_written.
 
     Raises
     ------
@@ -161,10 +177,37 @@ def execute_generation_artifact(
     artifact = build_execution_artifact(exec_input, result)
     artifact_path = write_execution_artifact(artifact, output_dir)
 
-    # ── 7. Return summary ─────────────────────────────────────────────────────
+    # ── 7. Build and optionally write run summary (Benchmark-4D.2) ────────────
+    # final_success is a final execution success proxy, not a process reliability metric.
+    final_success = (
+        extraction_status == "success"
+        and result.execution_performed is True
+        and result.tests_passed is True
+    )
+
+    run_summary_artifact_path: Optional[Path] = None
+    summary_written = False
+
+    if write_summary:
+        _summary = build_run_summary(
+            gen_artifact,
+            artifact,
+            generation_artifact_path=path,
+            execution_artifact_path=artifact_path,
+        )
+        run_summary_artifact_path = write_run_summary(
+            _summary,
+            output_dir=summary_output_dir,
+        )
+        summary_written = True
+
+    # ── 8. Return summary ─────────────────────────────────────────────────────
     return {
         "generation_artifact_path": str(path),
         "execution_artifact_path": str(artifact_path),
+        "run_summary_artifact_path": (
+            str(run_summary_artifact_path) if run_summary_artifact_path is not None else None
+        ),
         "run_id": exec_run_id,
         "benchmark": benchmark,
         "task_id": task_id,
@@ -175,4 +218,6 @@ def execute_generation_artifact(
         "execution_performed": result.execution_performed,
         "tests_passed": result.tests_passed,
         "error_type": result.error_type,
+        "final_success": final_success,
+        "summary_written": summary_written,
     }

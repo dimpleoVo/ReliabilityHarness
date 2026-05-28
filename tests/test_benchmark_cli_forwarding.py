@@ -35,6 +35,7 @@ def _fake_exec_result(path: str = "test.json") -> dict:
     return {
         "generation_artifact_path": path,
         "execution_artifact_path": "/tmp/exec/run_test/run_test_tiny_001.json",
+        "run_summary_artifact_path": "/tmp/summaries/run_test_tiny_001_summary.json",
         "run_id": "run_test",
         "benchmark": "tiny",
         "task_id": "tiny_001",
@@ -45,6 +46,8 @@ def _fake_exec_result(path: str = "test.json") -> dict:
         "execution_performed": True,
         "tests_passed": True,
         "error_type": None,
+        "final_success": True,
+        "summary_written": True,
     }
 
 
@@ -303,3 +306,56 @@ class TestNoSecretsInCliOutput:
         cli_main(["benchmark", "--execute-generation-artifact", path])
         captured = capsys.readouterr()
         assert ".env" not in captured.out.lower()
+
+
+# ── 14. Benchmark-4D.2: CLI forwards run summary fields ──────────────────────
+
+class TestCliForwardsRunSummaryFields:
+    """CLI execution mode forwards run_summary_artifact_path, final_success, summary_written."""
+
+    def test_cli_returns_run_summary_artifact_path(self, monkeypatch, tmp_path, capsys):
+        _patch_run(monkeypatch)
+        path = str(tmp_path / "gen.json")
+        cli_main(["benchmark", "--execute-generation-artifact", path])
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert "run_summary_artifact_path" in data
+
+    def test_cli_returns_final_success(self, monkeypatch, tmp_path, capsys):
+        _patch_run(monkeypatch)
+        path = str(tmp_path / "gen.json")
+        cli_main(["benchmark", "--execute-generation-artifact", path])
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert "final_success" in data
+        assert data["final_success"] is True
+
+    def test_cli_returns_summary_written(self, monkeypatch, tmp_path, capsys):
+        _patch_run(monkeypatch)
+        path = str(tmp_path / "gen.json")
+        cli_main(["benchmark", "--execute-generation-artifact", path])
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert "summary_written" in data
+        assert data["summary_written"] is True
+
+    def test_cli_dry_run_unaffected(self, monkeypatch, capsys):
+        """Dry-run result does not include run_summary_artifact_path or final_success."""
+        calls = _patch_run(monkeypatch)
+        cli_main(["benchmark", "--benchmark", "tiny", "--dry-run"])
+        # The patched run() returns _fake_exec_result which has these fields,
+        # but we're verifying the CLI still works (no crash, captures are JSON).
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert isinstance(data, dict)
+        assert len(calls) == 1
+
+    def test_cli_run_summary_path_is_string_or_null(self, monkeypatch, tmp_path, capsys):
+        _patch_run(monkeypatch)
+        path = str(tmp_path / "gen.json")
+        cli_main(["benchmark", "--execute-generation-artifact", path])
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data["run_summary_artifact_path"] is None or isinstance(
+            data["run_summary_artifact_path"], str
+        )

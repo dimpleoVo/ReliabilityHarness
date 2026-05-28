@@ -28,6 +28,89 @@ Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
 ---
 
+## Benchmark-4D.2: Auto Write Run Summary after Execution Artifact
+
+**Status:** Implemented.
+
+**Scope:** `execute_generation_artifact()` now auto-builds and writes a run summary artifact
+immediately after writing the execution artifact. Both the module entrypoint
+(`python -m reliability_harness.experiments.run_benchmark --execute-generation-artifact`)
+and the CLI (`python -m reliability_harness.cli benchmark --execute-generation-artifact`)
+return the new summary fields automatically.
+
+**Full chain (Benchmark-4D.2):**
+```
+generation artifact (JSON)
+  -> execution artifact  (outputs/executions/{run_id}/)
+  -> run summary artifact  (outputs/artifacts/run_summaries/)
+```
+
+**New return fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `run_summary_artifact_path` | `str \| null` | Path of written run summary JSON (`null` if `write_summary=False`) |
+| `final_success` | `bool` | `extraction_status == success AND execution_performed AND tests_passed` |
+| `summary_written` | `bool` | `true` if run summary was written, `false` if disabled |
+
+**`final_success` definition:**
+```
+extraction_status == "success"
+AND execution_performed is True
+AND tests_passed is True
+```
+`final_success` is a **final execution success proxy**, NOT a process reliability metric.
+
+**Example output (execution mode):**
+```json
+{
+  "generation_artifact_path": "outputs/predictions/.../tiny_001.json",
+  "execution_artifact_path": "outputs/executions/.../..._tiny_001.json",
+  "run_summary_artifact_path": "outputs/artifacts/run_summaries/..._tiny_001_summary.json",
+  "run_id": "...",
+  "benchmark": "tiny",
+  "task_id": "tiny_001",
+  "model_name": "deepseek-v4-flash",
+  "extraction_status": "success",
+  "runner_type": "docker",
+  "docker_used": true,
+  "execution_performed": true,
+  "tests_passed": true,
+  "error_type": null,
+  "final_success": true,
+  "summary_written": true
+}
+```
+
+**Run summary output path:** `outputs/artifacts/run_summaries/{run_id}_{task_id}_summary.json`
+(covered by `.gitignore` via `outputs/*`).
+
+**API change:**
+```python
+execute_generation_artifact(
+    generation_artifact_path,
+    *,
+    output_root=None,
+    backend=None,
+    use_docker=True,
+    timeout_ms=10000,
+    write_summary=True,        # NEW — default True: auto-write run summary
+    summary_output_dir=None,   # NEW — default: outputs/artifacts/run_summaries/
+)
+```
+
+**Benchmark-4D.2 boundaries:**
+- Summary is written by default (`write_summary=True`).
+  Pass `write_summary=False` to disable (e.g. for testing).
+- No batch, manifest, or directory summary.
+- No generate+execute+summarize one-command pipeline.
+- No process metrics, retry/recovery metrics, memory effect metrics.
+- No failure taxonomy.
+- `run_benchmark.py` and `cli.py` argument lists are **unchanged** —
+  `write_summary` and `summary_output_dir` are only available via Python API.
+
+---
+
 ## Benchmark-4D.1: Extensible Single-Run Summary Schema
 
 **Status:** Implemented.
@@ -406,7 +489,7 @@ Benchmark-3 adds LLM candidate generation on top of the Benchmark-2 data-loading
 ```bash
 # Python module
 python -m reliability_harness.experiments.run_benchmark --benchmark tiny --generate --limit 1
-python -m reliability_harness.experiments.run_benchmark --benchmark mbpp --generate --limit 2 --model-name deepseek-chat
+python -m reliability_harness.experiments.run_benchmark --benchmark mbpp --generate --limit 2 --model-name deepseek-v4-flash
 
 # CLI
 python -m reliability_harness.cli benchmark --benchmark tiny --generate --limit 1
@@ -418,7 +501,7 @@ python -m reliability_harness.cli benchmark --benchmark tiny --generate --limit 
 |---|---|---|
 | `--generate` | off | Enable generation mode (requires DEEPSEEK_API_KEY) |
 | `--limit N` | all | Process only the first N tasks |
-| `--model-name` | `deepseek-chat` | LLM model identifier |
+| `--model-name` | `deepseek-v4-flash` | LLM model identifier |
 | `--temperature` | `0.0` | Sampling temperature |
 | `--max-tokens` | `1024` | Max tokens per generation |
 
@@ -444,7 +527,7 @@ outputs/predictions/{run_id}/{task_id}.json
   "run_id": "...",
   "benchmark": "tiny",
   "task_id": "tiny_0",
-  "model_name": "deepseek-chat",
+  "model_name": "deepseek-v4-flash",
   "prompt": "...",
   "raw_response": "...",
   "extracted_code": "def solve(): ...",
@@ -463,7 +546,7 @@ outputs/predictions/{run_id}/{task_id}.json
 {
   "run_id": "...",
   "benchmark": "tiny",
-  "model_name": "deepseek-chat",
+  "model_name": "deepseek-v4-flash",
   "num_tasks": 2,
   "artifacts": ["...path/tiny_0.json", "...path/tiny_1.json"],
   "llm_used": true,

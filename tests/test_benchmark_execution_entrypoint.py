@@ -34,6 +34,7 @@ def _fake_summary(gen_path: str) -> dict:
     return {
         "generation_artifact_path": gen_path,
         "execution_artifact_path": "/tmp/exec/run_exec_exec/run_exec_exec_tiny_001.json",
+        "run_summary_artifact_path": "/tmp/summaries/run_exec_exec_tiny_001_summary.json",
         "run_id": "run_exec_exec",
         "benchmark": "tiny",
         "task_id": "tiny_001",
@@ -44,6 +45,8 @@ def _fake_summary(gen_path: str) -> dict:
         "execution_performed": True,
         "tests_passed": True,
         "error_type": None,
+        "final_success": True,
+        "summary_written": True,
     }
 
 
@@ -434,3 +437,54 @@ class TestExecutionTimeoutMs:
         monkeypatch.setattr(rb_mod, "_execute_generate", fake_execute_generate)
         run("tiny", generate_mode=True, execution_timeout_ms=99999)
         assert len(generate_calls) == 1
+
+
+# ── 14. Benchmark-4D.2: run_summary fields forwarded through entrypoint ────────
+
+class TestRunSummaryFieldsInEntrypoint:
+    """run_benchmark execution entrypoint returns run summary fields (Benchmark-4D.2)."""
+
+    def test_run_summary_artifact_path_in_result(self, monkeypatch, tmp_path):
+        calls: list = []
+        _patch_execute(monkeypatch, calls)
+        result = run(execute_generation_artifact_path=str(tmp_path / "gen.json"))
+        assert "run_summary_artifact_path" in result
+
+    def test_final_success_in_result(self, monkeypatch, tmp_path):
+        calls: list = []
+        _patch_execute(monkeypatch, calls)
+        result = run(execute_generation_artifact_path=str(tmp_path / "gen.json"))
+        assert "final_success" in result
+
+    def test_summary_written_in_result(self, monkeypatch, tmp_path):
+        calls: list = []
+        _patch_execute(monkeypatch, calls)
+        result = run(execute_generation_artifact_path=str(tmp_path / "gen.json"))
+        assert "summary_written" in result
+
+    def test_final_success_true_in_result(self, monkeypatch, tmp_path):
+        calls: list = []
+        _patch_execute(monkeypatch, calls)
+        result = run(execute_generation_artifact_path=str(tmp_path / "gen.json"))
+        assert result["final_success"] is True
+
+    def test_summary_written_true_in_result(self, monkeypatch, tmp_path):
+        calls: list = []
+        _patch_execute(monkeypatch, calls)
+        result = run(execute_generation_artifact_path=str(tmp_path / "gen.json"))
+        assert result["summary_written"] is True
+
+    def test_run_summary_artifact_path_is_string_or_none(self, monkeypatch, tmp_path):
+        calls: list = []
+        _patch_execute(monkeypatch, calls)
+        result = run(execute_generation_artifact_path=str(tmp_path / "gen.json"))
+        assert result["run_summary_artifact_path"] is None or isinstance(
+            result["run_summary_artifact_path"], str
+        )
+
+    def test_dry_run_unaffected_no_run_summary_fields(self):
+        """Dry-run result does not include run_summary_artifact_path or final_success."""
+        result = run("tiny", dry_run_mode=True)
+        assert result["status"] == "dry-run skeleton"
+        assert "run_summary_artifact_path" not in result
+        assert "final_success" not in result

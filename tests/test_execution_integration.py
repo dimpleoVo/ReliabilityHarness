@@ -496,3 +496,193 @@ class TestNoForbiddenImports:
     def test_no_core_llm_import(self):
         imports = self._imports()
         assert not any("core.llm" in name for name in imports)
+
+
+# ── Benchmark-4D.2: run summary auto-write ────────────────────────────────────
+
+class TestRunSummaryAutoWrite:
+    """execute_generation_artifact now auto-writes a run summary after execution."""
+
+    def test_summary_written_true_by_default(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            summary_output_dir=tmp_path / "summaries",
+        )
+        assert result["summary_written"] is True
+
+    def test_run_summary_artifact_path_in_result(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            summary_output_dir=tmp_path / "summaries",
+        )
+        assert "run_summary_artifact_path" in result
+        assert result["run_summary_artifact_path"] is not None
+
+    def test_run_summary_artifact_file_exists(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            summary_output_dir=tmp_path / "summaries",
+        )
+        assert Path(result["run_summary_artifact_path"]).exists()
+
+    def test_final_success_true_when_all_pass(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            summary_output_dir=tmp_path / "summaries",
+        )
+        assert result["final_success"] is True
+
+    def test_final_success_false_when_tests_fail(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_FailureBackend(),
+            summary_output_dir=tmp_path / "summaries",
+        )
+        assert result["final_success"] is False
+
+    def test_write_summary_false_skips_writing(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            write_summary=False,
+            summary_output_dir=tmp_path / "summaries",
+        )
+        assert result["summary_written"] is False
+        assert result["run_summary_artifact_path"] is None
+
+    def test_write_summary_false_final_success_still_computed(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            write_summary=False,
+            summary_output_dir=tmp_path / "summaries",
+        )
+        assert "final_success" in result
+        assert result["final_success"] is True
+
+    def test_write_summary_false_no_file_written(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        summary_dir = tmp_path / "summaries"
+        execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            write_summary=False,
+            summary_output_dir=summary_dir,
+        )
+        assert not summary_dir.exists() or not list(summary_dir.glob("*.json"))
+
+    def test_summary_output_dir_override(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        custom_dir = tmp_path / "my_custom_summaries"
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            summary_output_dir=custom_dir,
+        )
+        assert Path(result["run_summary_artifact_path"]).parent == custom_dir
+
+    def test_run_summary_has_stable_envelope(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            summary_output_dir=tmp_path / "summaries",
+        )
+        with open(result["run_summary_artifact_path"], encoding="utf-8") as f:
+            run_summary = json.load(f)
+        for key in (
+            "artifact_version",
+            "created_at",
+            "identity",
+            "artifact_refs",
+            "generation",
+            "execution",
+            "success",
+            "metrics",
+            "diagnostics",
+            "limitations",
+        ):
+            assert key in run_summary, f"Missing envelope key: {key!r}"
+
+    def test_run_summary_no_large_raw_fields(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            summary_output_dir=tmp_path / "summaries",
+        )
+        with open(result["run_summary_artifact_path"], encoding="utf-8") as f:
+            run_summary = json.load(f)
+        for key in ("prompt", "raw_response", "extracted_code", "candidate_code", "stdout", "stderr"):
+            assert key not in run_summary, f"Forbidden key {key!r} copied into run summary"
+
+    def test_run_summary_no_secrets(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            summary_output_dir=tmp_path / "summaries",
+        )
+        with open(result["run_summary_artifact_path"], encoding="utf-8") as f:
+            content = f.read()
+        for pattern in ("DEEPSEEK_API_KEY", "deepseek_api_key", "api_key=", "sk-"):
+            assert pattern not in content, f"Forbidden pattern {pattern!r} in run summary"
+
+    def test_run_summary_final_success_false_on_failure(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_FailureBackend(),
+            summary_output_dir=tmp_path / "summaries",
+        )
+        with open(result["run_summary_artifact_path"], encoding="utf-8") as f:
+            run_summary = json.load(f)
+        assert run_summary["success"]["final_success"] is False
+
+    def test_run_summary_is_process_reliability_metric_false(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            summary_output_dir=tmp_path / "summaries",
+        )
+        with open(result["run_summary_artifact_path"], encoding="utf-8") as f:
+            run_summary = json.load(f)
+        assert run_summary["success"]["is_process_reliability_metric"] is False
+
+    def test_run_summary_artifact_version(self, tmp_path):
+        path = _write_gen_artifact(tmp_path)
+        result = execute_generation_artifact(
+            path,
+            output_root=tmp_path / "executions",
+            backend=_SuccessBackend(),
+            summary_output_dir=tmp_path / "summaries",
+        )
+        with open(result["run_summary_artifact_path"], encoding="utf-8") as f:
+            run_summary = json.load(f)
+        assert run_summary["artifact_version"] == "4D.1"
