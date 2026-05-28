@@ -39,4 +39,5 @@ python -m pytest \
   tests/test_run_summary_artifact.py \
   tests/test_process_metrics.py \
   tests/test_failure_diagnostics.py \
+  tests/test_aggregate_summary.py \
   -v

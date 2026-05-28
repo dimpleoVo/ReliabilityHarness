@@ -28,6 +28,67 @@ Supported benchmarks: `tiny`, `mbpp`, `humaneval`
 
 ---
 
+## Benchmark-6A: Aggregate Summary over Run Summaries
+
+**Status:** Implemented.
+
+**Scope:** `build_aggregate_summary()` aggregates a list of per-task run summary dicts
+into a single machine-readable aggregate summary for paper tables and experiment statistics.
+
+**Computed fields:**
+
+| Field | Location | Definition |
+|---|---|---|
+| `final_success_rate` | `rates` | fraction of runs where `success.final_success` is `true` |
+| `observable_process_success_rate` | `rates` | fraction where `metrics.process.observable_process_success` is `true` |
+| `failure_observed_rate` | `rates` | fraction where `diagnostics.failure.failure_observed` is `true` |
+| `timeout_rate` | `rates` | fraction where `metrics.process.timeout_observed` is `true` |
+| `runtime_error_rate` | `rates` | fraction where `metrics.process.runtime_error_observed` is `true` |
+| `failure_stage_distribution` | `distributions` | count by `diagnostics.failure.failure_stage` |
+| `failure_type_distribution` | `distributions` | count by `diagnostics.failure.failure_type` |
+
+**Important semantics:**
+- `final_success_rate` is the fraction of runs where final execution succeeded.  
+  It is **not** a full reliability score.
+- `observable_process_success_rate` is based only on minimal observable artifact fields (Benchmark-5A).  
+  It is **not** full process correctness.
+- Distributions are raw counts, not fractions.
+- `total_runs == 0` → all rates are `0.0` (no divide-by-zero error).
+
+**New module:** `reliability_harness/artifacts/aggregate_summary.py`
+
+**Public API:**
+```python
+from reliability_harness.artifacts.aggregate_summary import (
+    build_aggregate_summary,            # from a list of run summary dicts
+    build_aggregate_summary_from_paths, # load from disk + aggregate
+    write_aggregate_summary,            # write to outputs/artifacts/aggregate_summaries/
+    load_json,                          # load JSON (raises AggregateSummaryError)
+    AggregateSummaryError,              # raised on missing/invalid input
+)
+```
+
+**Output path:** `outputs/artifacts/aggregate_summaries/aggregate_summary_{timestamp}.json`  
+(covered by `.gitignore` via `outputs/*`).
+
+**What is NOT implemented (Benchmark-6A boundaries):**
+- batch execution, code generation
+- retry / recovery metrics
+- memory metrics
+- reasoning consistency, tool correctness
+- LLM-as-judge, full failure taxonomy
+- report generation
+
+Aggregate summary does **not** execute code, call LLM, or use Docker.
+It reads only pre-computed run summary artifact fields.
+
+**Benchmark-6A boundaries:**
+- `run_benchmark.py` and `cli.py` are unchanged.
+- No batch, manifest, or directory processing.
+- No generate+execute+summarize one-command pipeline changes.
+
+---
+
 ## Benchmark-5B: Minimal Observable Failure Diagnostics
 
 **Status:** Implemented.
@@ -183,7 +244,8 @@ from reliability_harness.metrics.process_metrics import (
 ```
 
 **`metrics.process` is auto-populated in `build_run_summary()`.** No API change required.
-`metrics.recovery`, `metrics.memory`, and `diagnostics.failure` remain empty.
+`metrics.recovery` and `metrics.memory` remain empty extension points.
+`diagnostics.failure` was empty at Benchmark-5A; it is now automatically populated by **Benchmark-5B**.
 
 **Benchmark-5A boundaries:**
 - `run_benchmark.py` and `cli.py` are unchanged.
@@ -320,7 +382,8 @@ AND tests_passed is True
 `final_success` is a **final execution success proxy**, not a process reliability metric.
 `success.is_process_reliability_metric` is always `false`.
 `metrics.process`, `metrics.recovery`, `metrics.memory`, and `diagnostics.failure` are
-empty extension points — they are not populated in Benchmark-4D.1.
+extension points — they are empty in Benchmark-4D.1 and populated by later benchmarks
+(`metrics.process` by 5A, `diagnostics.failure` by 5B).
 
 This distinction is fundamental to the paper thesis:
 > *Final task success does not fully reflect agent reliability.*
